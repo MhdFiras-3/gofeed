@@ -47,12 +47,12 @@ type PostRead struct {
 }
 
 type RefreshToken struct {
-	Token     string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	ExpiresAt time.Time
-	RevokedAt sql.NullTime
-	UserID    uuid.UUID
+	RefreshToken string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	ExpiresAt    time.Time
+	RevokedAt    sql.NullTime
+	UserID       uuid.UUID
 }
 
 type User struct {

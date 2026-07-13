@@ -1,5 +1,5 @@
 -- name: CreateRefreshToken :one
-INSERT INTO refresh_tokens (token,expires_at,user_id)
+INSERT INTO refresh_tokens (refresh_token,expires_at,user_id)
 VALUES (
     $1,
     $2,
@@ -11,11 +11,11 @@ RETURNING *;
 -- name: GetUserFromRefreshToken :one
 SELECT users.* FROM users
 JOIN refresh_tokens on users.id = refresh_tokens.user_id
-WHERE refresh_tokens.token = $1
+WHERE refresh_tokens.refresh_token = $1
 AND revoked_at IS NULL
 AND expires_at > NOW();
 
 -- name: RevokeRefreshToken :exec
 UPDATE refresh_tokens
 SET revoked_at = NOW(), updated_at = NOW()
-WHERE token = $1;
+WHERE refresh_token = $1;

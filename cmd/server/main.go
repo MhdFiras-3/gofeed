@@ -1,12 +1,16 @@
 package server
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"os"
+	"time"
 
+	"github.com/MhdFiras-3/gofeed/internal/auth"
 	"github.com/MhdFiras-3/gofeed/internal/database"
+	"github.com/google/uuid"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -31,7 +35,41 @@ func main() {
 	dbQueries := database.New(dbConnection)
 
 	apicfg := &apiConfig{
-		db: dbQueries,
+		db:     dbQueries,
+		dbConn: dbConnection,
 	}
 
+}
+func rotateRefreshToken(api *apiConfig, userID uuid.UUID, refreshtoken string) (database.RefreshToken, error) {
+	tx, err := api.dbConn.BeginTx(context.Background(), &sql.TxOptions{})
+
+	if err != nil {
+		return database.RefreshToken{}, err
+	}
+	defer tx.Rollback()
+	dbTx := api.db.WithTx(tx)
+
+	err = dbTx.RevokeRefreshToken(context.Background(), refreshtoken)
+	if err != nil {
+		return database.RefreshToken{}, fmt.Errorf("failed to revoke old refresh token: %w", err)
+	}
+	token, err := auth.MakeRefreshToken()
+	if err != nil {
+		return database.RefreshToken{}, err
+	}
+	newRefreshToken, err := dbTx.CreateRefreshToken(context.Background(), database.CreateRefreshTokenParams{
+		RefreshToken: token,
+		ExpiresAt:    time.Now().Add(24 * time.Hour * 7),
+		UserID:       userID,
+	})
+
+	if err != nil {
+		return database.RefreshToken{}, err
+	}
+	err = tx.Commit()
+	if err != nil {
+		return database.RefreshToken{}, err
+	}
+
+	return newRefreshToken, nil
 }

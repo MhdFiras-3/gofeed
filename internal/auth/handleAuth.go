@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/alexedwards/argon2id"
@@ -21,4 +23,13 @@ func ValidatePasswordHash(password, hash string) (bool, error) {
 		return false, fmt.Errorf("error validating password: %v", err)
 	}
 	return match, nil
+}
+
+func MakeRefreshToken() (string, error) {
+	b := make([]byte, 32)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate random byte, %w", err)
+	}
+	return hex.EncodeToString(b), nil
 }

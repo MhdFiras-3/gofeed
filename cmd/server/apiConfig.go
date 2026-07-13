@@ -1,7 +1,12 @@
 package server
 
-import "github.com/MhdFiras-3/gofeed/internal/database"
+import (
+	"database/sql"
+
+	"github.com/MhdFiras-3/gofeed/internal/database"
+)
 
 type apiConfig struct {
-	db *database.Queries
+	db     *database.Queries
+	dbConn *sql.DB
 }

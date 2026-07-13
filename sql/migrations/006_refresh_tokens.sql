@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE refresh_tokens (
-    token TEXT PRIMARY KEY,
+    refresh_token TEXT PRIMARY KEY,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     expires_at TIMESTAMP NOT NULL,
