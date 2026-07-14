@@ -15,6 +15,8 @@ func respWithError(w http.ResponseWriter, errMsg string, errStatus int) {
 	data, err := json.Marshal(errorMsg{Error: errMsg})
 	if err != nil {
 		log.Printf("error encoding data: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -29,6 +31,8 @@ func respWithJson(w http.ResponseWriter, respStatus int, payload any) {
 	data, err := json.Marshal(payload)
 	if err != nil {
 		log.Printf("error encoding data: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(respStatus)
