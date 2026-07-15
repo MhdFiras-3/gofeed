@@ -34,7 +34,7 @@ func main() {
 	}
 	dbQueries := database.New(dbConnection)
 
-	apicfg := &apiConfig{
+	apicfg := &api.apiConfig{
 		db:     dbQueries,
 		dbConn: dbConnection,
 	}

@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"database/sql"
@@ -7,6 +7,7 @@ import (
 )
 
 type apiConfig struct {
-	db     *database.Queries
-	dbConn *sql.DB
+	db        *database.Queries
+	dbConn    *sql.DB
+	JWTSecret string
 }
