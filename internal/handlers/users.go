@@ -3,12 +3,14 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/MhdFiras-3/gofeed/internal/auth"
 	"github.com/MhdFiras-3/gofeed/internal/database"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type UserLoginData struct {
@@ -48,6 +50,11 @@ func (cfg *apiConfig) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		HashedPassword: hashedPassword,
 	})
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			respWithError(w, "email already registered", http.StatusConflict)
+			return
+		}
 		respWithError(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}
