@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/mail"
 	"strings"
+	"unicode"
 )
 
 func validateInput(input string) error {
@@ -38,6 +39,7 @@ func parsePassword(password string) error {
 	if len(password) < 20 {
 		return errors.New("password too short")
 	}
+
 	return nil
 
 }
@@ -50,5 +52,17 @@ func parseName(name string) error {
 	if len(name) > 30 {
 		return errors.New("name too long")
 	}
+	if containsControlChars(name) {
+		return errors.New("name contains invalid characters")
+	}
 	return nil
+}
+
+func containsControlChars(s string) bool {
+	for _, r := range s {
+		if unicode.IsControl(r) {
+			return true
+		}
+	}
+	return false
 }
