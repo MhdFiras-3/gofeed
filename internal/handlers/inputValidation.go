@@ -8,8 +8,24 @@ import (
 	"unicode"
 )
 
-func validateInput(input string) error {
+type inputError struct {
+	Type    string `json:"type"`
+	Message string `json:"message"`
+}
 
+func validateInput(name, email, password string) []inputError {
+	var errs []inputError
+
+	if err := parseName(name); err != nil {
+		errs = append(errs, inputError{Type: "name", Message: err.Error()})
+	}
+	if err := parseEmail(email); err != nil {
+		errs = append(errs, inputError{Type: "email", Message: err.Error()})
+	}
+	if err := parsePassword(password); err != nil {
+		errs = append(errs, inputError{Type: "password", Message: err.Error()})
+	}
+	return errs
 }
 
 func parseEmail(email string) error {
