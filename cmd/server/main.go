@@ -10,6 +10,7 @@ import (
 
 	"github.com/MhdFiras-3/gofeed/internal/auth"
 	"github.com/MhdFiras-3/gofeed/internal/database"
+	"github.com/MhdFiras-3/gofeed/internal/handlers"
 	"github.com/google/uuid"
 
 	"github.com/joho/godotenv"
@@ -34,20 +35,20 @@ func main() {
 	}
 	dbQueries := database.New(dbConnection)
 
-	apicfg := &api.apiConfig{
-		db:     dbQueries,
-		dbConn: dbConnection,
+	apicfg := &handlers.APIConfig{
+		DB:     dbQueries,
+		DBConn: dbConnection,
 	}
 
 }
-func rotateRefreshToken(api *apiConfig, userID uuid.UUID, refreshtoken string) (database.RefreshToken, error) {
-	tx, err := api.dbConn.BeginTx(context.Background(), &sql.TxOptions{})
+func rotateRefreshToken(api *handlers.APIConfig, userID uuid.UUID, refreshtoken string) (database.RefreshToken, error) {
+	tx, err := api.DBConn.BeginTx(context.Background(), &sql.TxOptions{})
 
 	if err != nil {
 		return database.RefreshToken{}, err
 	}
 	defer tx.Rollback()
-	dbTx := api.db.WithTx(tx)
+	dbTx := api.DB.WithTx(tx)
 
 	err = dbTx.RevokeRefreshToken(context.Background(), refreshtoken)
 	if err != nil {

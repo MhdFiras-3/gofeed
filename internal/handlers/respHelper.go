@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-func respWithError(w http.ResponseWriter, errMsg string, errStatus int) {
+func respWithError(w http.ResponseWriter, errStatus int, errMsg string) {
 	type errorMsg struct {
 		Error string `json:"error"`
 	}

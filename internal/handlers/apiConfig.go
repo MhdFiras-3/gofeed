@@ -6,8 +6,8 @@ import (
 	"github.com/MhdFiras-3/gofeed/internal/database"
 )
 
-type apiConfig struct {
-	db        *database.Queries
-	dbConn    *sql.DB
+type APIConfig struct {
+	DB        *database.Queries
+	DBConn    *sql.DB
 	JWTSecret string
 }

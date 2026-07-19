@@ -9,7 +9,7 @@ import (
 )
 
 type inputError struct {
-	Type    string `json:"type"`
+	Field   string `json:"field"`
 	Message string `json:"message"`
 }
 
@@ -17,13 +17,13 @@ func validateInput(name, email, password string) []inputError {
 	var errs []inputError
 
 	if err := parseName(name); err != nil {
-		errs = append(errs, inputError{Type: "name", Message: err.Error()})
+		errs = append(errs, inputError{Field: "name", Message: err.Error()})
 	}
 	if err := parseEmail(email); err != nil {
-		errs = append(errs, inputError{Type: "email", Message: err.Error()})
+		errs = append(errs, inputError{Field: "email", Message: err.Error()})
 	}
 	if err := parsePassword(password); err != nil {
-		errs = append(errs, inputError{Type: "password", Message: err.Error()})
+		errs = append(errs, inputError{Field: "password", Message: err.Error()})
 	}
 	return errs
 }

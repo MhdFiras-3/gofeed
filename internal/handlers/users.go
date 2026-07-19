@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -10,7 +9,7 @@ import (
 	"github.com/MhdFiras-3/gofeed/internal/auth"
 	"github.com/MhdFiras-3/gofeed/internal/database"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 )
 
 type UserLoginData struct {
@@ -28,34 +27,42 @@ type User struct {
 
 func (cfg *apiConfig) HandlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	type requestParam struct {
-		Name     string
-		Email    string
-		Password string
+		Name     string `json:"name"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	type errResp struct {
+		Errors []inputError `json:"errors"`
 	}
 	var reqData requestParam
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&reqData); err != nil {
-		respWithError(w, "something went wrong", http.StatusInternalServerError)
+		respWithError(w, http.StatusInternalServerError, "something went wrong")
+		return
+	}
+	if errs := validateInput(reqData.Name, reqData.Email, reqData.Password); len(errs) > 0 {
+		respWithJson(w, http.StatusBadRequest, errResp{Errors: errs})
 		return
 	}
 	hashedPassword, err := auth.HashPassword(reqData.Password)
 	if err != nil {
-		respWithError(w, "something went wrong", http.StatusInternalServerError)
+		respWithError(w, http.StatusInternalServerError, "something went wrong")
 		return
 	}
 
-	createdUser, err := cfg.db.CreateUser(context.Background(), database.CreateUserParams{
+	createdUser, err := cfg.db.CreateUser(r.Context(), database.CreateUserParams{
 		Name:           reqData.Name,
 		Email:          reqData.Email,
 		HashedPassword: hashedPassword,
 	})
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			respWithError(w, "email already registered", http.StatusConflict)
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			respWithError(w, http.StatusConflict, "email already registered")
 			return
 		}
-		respWithError(w, "something went wrong", http.StatusInternalServerError)
+		respWithError(w, http.StatusBadRequest, "something went wrong")
 		return
 	}
 	respWithJson(w, http.StatusCreated, User{
