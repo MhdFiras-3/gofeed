@@ -41,7 +41,7 @@ func main() {
 	}
 
 }
-func rotateRefreshToken(api *handlers.APIConfig, userID uuid.UUID, refreshtoken string) (database.RefreshToken, error) {
+func rotateRefreshToken(api *APIConfig, userID uuid.UUID, refreshtoken string) (database.RefreshToken, error) {
 	tx, err := api.DBConn.BeginTx(context.Background(), &sql.TxOptions{})
 
 	if err != nil {
