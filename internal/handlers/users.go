@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/MhdFiras-3/gofeed/internal/auth"
@@ -118,9 +119,10 @@ func (cfg *APIConfig) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	type response struct {
 		User
-		AccessToken  string
-		RefreshToken string
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
 	}
+
 	var reqData requestParam
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&reqData); err != nil {
@@ -128,11 +130,15 @@ func (cfg *APIConfig) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	DBUser, err := cfg.DB.GetUserByEmail(r.Context(), reqData.Email)
-	if err != nil {
-		respWithError(w, http.StatusUnauthorized, "wrong email or password")
+	userExists := err == nil
+	hashToValidate := os.Getenv("DUMMY_HASH")
+
+	if userExists {
+		hashToValidate = DBUser.HashedPassword
 	}
-	match, err := auth.ValidatePasswordHash(reqData.Password, DBUser.HashedPassword)
-	if !match || err != nil {
+
+	match, err := auth.ValidatePasswordHash(reqData.Password, hashToValidate)
+	if !userExists || !match || err != nil {
 		respWithError(w, http.StatusUnauthorized, "wrong email or password")
 		return
 	}
