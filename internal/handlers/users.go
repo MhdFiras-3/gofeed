@@ -154,7 +154,7 @@ func (cfg *APIConfig) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	_, err = cfg.DB.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
 		RefreshToken: refreshToken,
-		ExpiresAt:    time.Now().Add(time.Hour * 24 * 60),
+		ExpiresAt:    time.Now().Add(time.Hour * 24 * 7),
 		UserID:       DBUser.ID,
 	})
 	if err != nil {
