@@ -175,3 +175,29 @@ func (cfg *APIConfig) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 	})
 
 }
+
+func (cfg *APIConfig) HandlerRefresh(w http.ResponseWriter, r *http.Request) {
+	type response struct {
+		Token string `json:"token"`
+	}
+
+	refreshToken, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respWithError(w, http.StatusBadRequest, "failed to get bearer token")
+		return
+	}
+	DBUser, err := cfg.DB.GetUserFromRefreshToken(r.Context(), refreshToken)
+	if err != nil {
+		respWithError(w, http.StatusInternalServerError, "failed to get user data")
+		return
+	}
+
+	DBRefreshToken, err := rotateRefreshToken(cfg, DBUser.ID, refreshToken)
+	if err != nil {
+		respWithError(w, http.StatusInternalServerError, "failed to issue token")
+		return
+	}
+	respWithJson(w, http.StatusOK, response{
+		Token: DBRefreshToken.RefreshToken,
+	})
+}
