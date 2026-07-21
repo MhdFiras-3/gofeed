@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/MhdFiras-3/gofeed/internal/database"
 	"github.com/MhdFiras-3/gofeed/internal/handlers"
@@ -32,8 +33,9 @@ func main() {
 	dbQueries := database.New(dbConnection)
 
 	apicfg := &handlers.APIConfig{
-		DB:     dbQueries,
-		DBConn: dbConnection,
+		DB:        dbQueries,
+		DBConn:    dbConnection,
+		JWTExpiry: time.Hour,
 	}
 
 }

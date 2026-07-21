@@ -142,7 +142,7 @@ func (cfg *APIConfig) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 		respWithError(w, http.StatusUnauthorized, "wrong email or password")
 		return
 	}
-	accessToken, err := auth.MakeJWT(DBUser.ID, cfg.JWTSecret, time.Hour)
+	accessToken, err := auth.MakeJWT(DBUser.ID, cfg.JWTSecret, cfg.JWTExpiry)
 	if err != nil {
 		respWithError(w, http.StatusInternalServerError, "failed to issue token")
 		return
@@ -178,7 +178,8 @@ func (cfg *APIConfig) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 
 func (cfg *APIConfig) HandlerRefresh(w http.ResponseWriter, r *http.Request) {
 	type response struct {
-		Token string `json:"token"`
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
 	}
 
 	refreshToken, err := auth.GetBearerToken(r.Header)
@@ -188,16 +189,23 @@ func (cfg *APIConfig) HandlerRefresh(w http.ResponseWriter, r *http.Request) {
 	}
 	DBUser, err := cfg.DB.GetUserFromRefreshToken(r.Context(), refreshToken)
 	if err != nil {
-		respWithError(w, http.StatusInternalServerError, "failed to get user data")
+		respWithError(w, http.StatusUnauthorized, "failed to find token")
 		return
 	}
 
-	DBRefreshToken, err := rotateRefreshToken(cfg, DBUser.ID, refreshToken)
+	newAccessToken, err := auth.MakeJWT(DBUser.ID, cfg.JWTSecret, cfg.JWTExpiry)
+	if err != nil {
+		respWithError(w, http.StatusInternalServerError, "failed to issue token")
+		return
+	}
+
+	newRefreshTokenDB, err := rotateRefreshToken(cfg, DBUser.ID, refreshToken)
 	if err != nil {
 		respWithError(w, http.StatusInternalServerError, "failed to issue token")
 		return
 	}
 	respWithJson(w, http.StatusOK, response{
-		Token: DBRefreshToken.RefreshToken,
+		AccessToken:  newAccessToken,
+		RefreshToken: newRefreshTokenDB.RefreshToken,
 	})
 }
