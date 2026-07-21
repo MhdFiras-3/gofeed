@@ -209,3 +209,20 @@ func (cfg *APIConfig) HandlerRefresh(w http.ResponseWriter, r *http.Request) {
 		RefreshToken: newRefreshTokenDB.RefreshToken,
 	})
 }
+
+func (cfg *APIConfig) MiddlewareAuth(handler func(http.ResponseWriter, *http.Request, uuid.UUID)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		accessToken, err := auth.GetBearerToken(r.Header)
+		if err != nil {
+			respWithError(w, http.StatusUnauthorized, "failed to get token")
+			return
+		}
+		id, err := auth.ValidateJWT(accessToken, cfg.JWTSecret)
+		if err != nil {
+			respWithError(w, http.StatusUnauthorized, "invalid access token")
+			return
+
+		}
+		handler(w, r, id)
+	}
+}
