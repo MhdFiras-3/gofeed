@@ -214,8 +214,8 @@ func (cfg *APIConfig) HandlerRefresh(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (cfg *APIConfig) MiddlewareAuth(handler http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func (cfg *APIConfig) MiddlewareAuth(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		accessToken, err := auth.GetBearerToken(r.Header)
 		if err != nil {
@@ -230,6 +230,6 @@ func (cfg *APIConfig) MiddlewareAuth(handler http.HandlerFunc) http.HandlerFunc 
 		}
 		ctx := context.WithValue(r.Context(), userIDKey, id)
 		r = r.WithContext(ctx)
-		handler(w, r)
-	}
+		handler.ServeHTTP(w, r)
+	})
 }
