@@ -80,6 +80,7 @@ func (cfg *APIConfig) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	var reqData requestParam
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&reqData); err != nil {
+
 		respWithError(w, http.StatusInternalServerError, "something went wrong")
 		return
 	}
@@ -104,6 +105,7 @@ func (cfg *APIConfig) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 			respWithError(w, http.StatusConflict, "email already registered")
 			return
 		}
+
 		respWithError(w, http.StatusBadRequest, "something went wrong")
 		return
 	}
