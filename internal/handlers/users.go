@@ -16,6 +16,10 @@ import (
 	"github.com/lib/pq"
 )
 
+type contextIDKey string
+
+const userIDKey contextIDKey = "userID"
+
 type UserLoginData struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -210,8 +214,9 @@ func (cfg *APIConfig) HandlerRefresh(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (cfg *APIConfig) MiddlewareAuth(handler func(http.ResponseWriter, *http.Request, uuid.UUID)) http.HandlerFunc {
+func (cfg *APIConfig) MiddlewareAuth(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
 		accessToken, err := auth.GetBearerToken(r.Header)
 		if err != nil {
 			respWithError(w, http.StatusUnauthorized, "failed to get token")
@@ -223,6 +228,8 @@ func (cfg *APIConfig) MiddlewareAuth(handler func(http.ResponseWriter, *http.Req
 			return
 
 		}
-		handler(w, r, id)
+		ctx := context.WithValue(r.Context(), userIDKey, id)
+		r = r.WithContext(ctx)
+		handler(w, r)
 	}
 }
