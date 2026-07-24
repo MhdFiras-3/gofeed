@@ -7,10 +7,16 @@ VALUES (
 )
 RETURNING *;
 
--- name: UpdateUserPw :exec
+-- name: UpdateUser :one
 UPDATE users
-SET hashed_password = $2,updated_at = NOW()
-WHERE id = $1;
+SET 
+    name = COALESCE(sqlc.narg('name'),name),
+    email = COALESCE(sqlc.narg('email'),email),
+    hashed_password = COALESCE(sqlc.narg('hashed_password'),hashed_password),
+    updated_at = NOW()
+WHERE id = $1
+RETURNING *;
+
 
 -- name: GetUserByID :one
 SELECT * FROM users

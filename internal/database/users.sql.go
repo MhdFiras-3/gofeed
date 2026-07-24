@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -79,18 +80,39 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 	return i, err
 }
 
-const updateUserPw = `-- name: UpdateUserPw :exec
+const updateUser = `-- name: UpdateUser :one
 UPDATE users
-SET hashed_password = $2,updated_at = NOW()
+SET 
+    name = COALESCE($2,name),
+    email = COALESCE($3,email),
+    hashed_password = COALESCE($4,hashed_password),
+    updated_at = NOW()
 WHERE id = $1
+RETURNING id, name, email, hashed_password, created_at, updated_at
 `
 
-type UpdateUserPwParams struct {
+type UpdateUserParams struct {
 	ID             uuid.UUID
-	HashedPassword string
+	Name           sql.NullString
+	Email          sql.NullString
+	HashedPassword sql.NullString
 }
 
-func (q *Queries) UpdateUserPw(ctx context.Context, arg UpdateUserPwParams) error {
-	_, err := q.db.ExecContext(ctx, updateUserPw, arg.ID, arg.HashedPassword)
-	return err
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUser,
+		arg.ID,
+		arg.Name,
+		arg.Email,
+		arg.HashedPassword,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.HashedPassword,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
