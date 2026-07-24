@@ -48,6 +48,7 @@ func main() {
 		r.Post("/users", apicfg.HandlerCreateUser)
 		r.Post("/login", apicfg.HandlerLogin)
 		r.Post("/refresh", apicfg.HandlerRefresh)
+
 	})
 	fmt.Printf("serving on %s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))

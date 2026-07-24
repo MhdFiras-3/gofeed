@@ -235,3 +235,40 @@ func (cfg *APIConfig) MiddlewareAuth(handler http.Handler) http.Handler {
 		handler.ServeHTTP(w, r)
 	})
 }
+func (cfg *APIConfig) HandlerGetCurrentUser(w http.ResponseWriter, r *http.Request) {
+	id, ok := r.Context().Value(userIDKey).(uuid.UUID)
+	if !ok {
+		respWithError(w, http.StatusInternalServerError, "missing user id in context")
+		return
+	}
+	user, err := cfg.DB.GetUserByID(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			respWithError(w, http.StatusNotFound, "user not found")
+			return
+		}
+		respWithError(w, http.StatusInternalServerError, "failed to get user")
+		return
+	}
+	respWithJson(w, http.StatusOK, User{
+		ID:        user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	})
+}
+
+func (cfg *APIConfig) HandlerLogOut(w http.ResponseWriter, r *http.Request) {
+	refreshToken, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respWithError(w, http.StatusBadRequest, "failed to get bearer token")
+		return
+	}
+
+	if err := cfg.DB.RevokeRefreshToken(r.Context(), refreshToken); err != nil {
+		respWithError(w, http.StatusInternalServerError, "failed to revoke token")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
