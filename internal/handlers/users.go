@@ -272,3 +272,83 @@ func (cfg *APIConfig) HandlerLogOut(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (cfg *APIConfig) HandlerUpdateUser(w http.ResponseWriter, r *http.Request) {
+	type requestParam struct {
+		Name     *string `json:"name"`
+		Email    *string `json:"email"`
+		Password *string `json:"password"`
+	}
+	var reqData requestParam
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&reqData); err != nil {
+		respWithError(w, http.StatusInternalServerError, "something went wrong")
+		return
+	}
+
+	if reqData.Name == nil && reqData.Email == nil && reqData.Password == nil {
+		respWithError(w, http.StatusBadRequest, "no fields to update")
+		return
+	}
+
+	var nameParam sql.NullString
+	if reqData.Name != nil {
+		name := *reqData.Name
+		if err := parseName(name); err != nil {
+			respWithError(w, http.StatusBadRequest, "invalid name")
+			return
+		}
+		nameParam = sql.NullString{String: name, Valid: true}
+	}
+	var emailParam sql.NullString
+	if reqData.Email != nil {
+		email := *reqData.Email
+		if err := parseEmail(email); err != nil {
+			respWithError(w, http.StatusBadRequest, "invalid email")
+			return
+		}
+		emailParam = sql.NullString{String: email, Valid: true}
+	}
+	var hashedPasswordParam sql.NullString
+	if reqData.Password != nil {
+		password := *reqData.Password
+		if err := parsePassword(password); err != nil {
+			respWithError(w, http.StatusBadRequest, "invalid password")
+			return
+		}
+		hash, err := auth.HashPassword(password)
+		if err != nil {
+			respWithError(w, http.StatusInternalServerError, "failed to hash password")
+			return
+		}
+		hashedPasswordParam = sql.NullString{String: hash, Valid: true}
+	}
+
+	id, ok := r.Context().Value(userIDKey).(uuid.UUID)
+	if !ok {
+		respWithError(w, http.StatusInternalServerError, "missing user id in context")
+		return
+	}
+
+	DBUser, err := cfg.DB.UpdateUser(r.Context(), database.UpdateUserParams{
+		ID:             id,
+		Name:           nameParam,
+		Email:          emailParam,
+		HashedPassword: hashedPasswordParam,
+	})
+	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			respWithError(w, http.StatusConflict, "email already registered")
+			return
+		}
+		respWithError(w, http.StatusInternalServerError, "something went wrong")
+		return
+	}
+	respWithJson(w, http.StatusOK, User{
+		ID:        DBUser.ID,
+		Name:      DBUser.Name,
+		Email:     DBUser.Email,
+		UpdatedAt: DBUser.UpdatedAt,
+	})
+}
