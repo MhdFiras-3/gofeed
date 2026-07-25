@@ -45,11 +45,20 @@ func main() {
 	r := chi.NewRouter()
 
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Post("/users", apicfg.HandlerCreateUser)
+		r.Post("/register", apicfg.HandlerCreateUser)
 		r.Post("/login", apicfg.HandlerLogin)
 		r.Post("/refresh", apicfg.HandlerRefresh)
+		r.Post("/logout", apicfg.HandlerLogOut)
+
+		r.Group(func(r chi.Router) {
+			r.Use(apicfg.MiddlewareAuth)
+			r.Get("/me", apicfg.HandlerGetCurrentUser)
+			r.Patch("/me", apicfg.HandlerUpdateUser)
+			r.Delete("/me", apicfg.HandlerDeleteUser)
+		})
 
 	})
+
 	fmt.Printf("serving on %s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
 }
