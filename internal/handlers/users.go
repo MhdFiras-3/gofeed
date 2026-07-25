@@ -352,3 +352,16 @@ func (cfg *APIConfig) HandlerUpdateUser(w http.ResponseWriter, r *http.Request) 
 		UpdatedAt: DBUser.UpdatedAt,
 	})
 }
+
+func (cfg *APIConfig) HandlerDeleteUser(w http.ResponseWriter, r *http.Request) {
+	id, ok := r.Context().Value(userIDKey).(uuid.UUID)
+	if !ok {
+		respWithError(w, http.StatusInternalServerError, "missing user id in context")
+		return
+	}
+	if err := cfg.DB.DeleteUser(r.Context(), id); err != nil {
+		respWithError(w, http.StatusInternalServerError, "failed to delete user")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
