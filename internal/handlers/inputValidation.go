@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/mail"
+	"net/url"
 	"strings"
 	"unicode"
 )
@@ -81,4 +82,21 @@ func containsControlChars(s string) bool {
 		}
 	}
 	return false
+}
+func parseURL(rawURL string) error {
+	rawURL = strings.TrimSpace(rawURL)
+	if rawURL == "" {
+		return errors.New("url cannot be empty")
+	}
+	if len(rawURL) > 150 {
+		return errors.New("url too long")
+	}
+	url, err := url.ParseRequestURI(rawURL)
+	if err != nil {
+		return fmt.Errorf("invalde url: %w", err)
+	}
+	if url.Scheme != "http" && url.Scheme != "https" {
+		return errors.New("url must use http or https")
+	}
+	return nil
 }
