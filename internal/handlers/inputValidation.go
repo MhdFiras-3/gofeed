@@ -66,7 +66,7 @@ func parseName(name string) error {
 	if name == "" {
 		return errors.New("name cannot be empty")
 	}
-	if len(name) > 30 {
+	if len(name) > 45 {
 		return errors.New("name too long")
 	}
 	if containsControlChars(name) {

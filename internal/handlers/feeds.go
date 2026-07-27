@@ -11,7 +11,8 @@ import (
 
 func (cfg *APIConfig) HandlerCreateFeed(w http.ResponseWriter, r *http.Request) {
 	type requestParam struct {
-		URL *string `json:"url"`
+		URL  *string `json:"url"`
+		Name *string `json:"name"`
 	}
 	var reqData requestParam
 	decoder := json.NewDecoder(r.Body)
@@ -19,13 +20,18 @@ func (cfg *APIConfig) HandlerCreateFeed(w http.ResponseWriter, r *http.Request) 
 		respWithError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	if reqData.URL == nil {
+	if reqData.URL == nil || reqData.Name == nil {
 		respWithError(w, http.StatusBadRequest, "URL must not be empty")
 		return
 	}
 	err := parseURL(*reqData.URL)
 	if err != nil {
 		respWithError(w, http.StatusBadRequest, "invalid URL")
+		return
+	}
+	err = parseName(*reqData.Name)
+	if err != nil {
+		respWithError(w, http.StatusBadRequest, "invalid feed name")
 		return
 	}
 
