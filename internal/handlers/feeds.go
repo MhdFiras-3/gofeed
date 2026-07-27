@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -9,6 +10,25 @@ import (
 )
 
 func (cfg *APIConfig) HandlerCreateFeed(w http.ResponseWriter, r *http.Request) {
+	type requestParam struct {
+		URL *string `json:"url"`
+	}
+	var reqData requestParam
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&reqData); err != nil {
+		respWithError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if reqData.URL == nil {
+		respWithError(w, http.StatusBadRequest, "URL must not be empty")
+		return
+	}
+	err := parseURL(*reqData.URL)
+	if err != nil {
+		respWithError(w, http.StatusBadRequest, "invalid URL")
+		return
+	}
+
 	id, ok := r.Context().Value(userIDKey).(uuid.UUID)
 	if !ok {
 		respWithError(w, http.StatusInternalServerError, "failed missing user id in context")

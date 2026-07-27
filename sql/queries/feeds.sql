@@ -1,9 +1,8 @@
 -- name: CreateFeed :one
-INSERT INTO feeds (name,url,category)
+INSERT INTO feeds (name,url)
 VALUES (
     $1,
-    $2,
-    $3
+    $2
 )
 RETURNING *;
 
