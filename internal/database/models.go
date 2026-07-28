@@ -13,7 +13,6 @@ import (
 
 type Feed struct {
 	ID            uuid.UUID
-	Name          string
 	Url           string
 	Category      string
 	LastFetchedAt sql.NullTime
@@ -27,6 +26,7 @@ type FeedFollow struct {
 	FeedID    uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	Name      string
 }
 
 type Post struct {

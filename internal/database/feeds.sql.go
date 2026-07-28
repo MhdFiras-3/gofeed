@@ -12,27 +12,20 @@ import (
 )
 
 const createFeed = `-- name: CreateFeed :one
-INSERT INTO feeds (name,url)
+INSERT INTO feeds (url)
 VALUES (
-    $1,
-    $2
+    $1
 )
 ON CONFLICT (url) DO UPDATE
 SET updated_at = NOW()
-RETURNING id, name, url, category, last_fetched_at, created_at, updated_at
+RETURNING id, url, category, last_fetched_at, created_at, updated_at
 `
 
-type CreateFeedParams struct {
-	Name string
-	Url  string
-}
-
-func (q *Queries) CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, error) {
-	row := q.db.QueryRowContext(ctx, createFeed, arg.Name, arg.Url)
+func (q *Queries) CreateFeed(ctx context.Context, url string) (Feed, error) {
+	row := q.db.QueryRowContext(ctx, createFeed, url)
 	var i Feed
 	err := row.Scan(
 		&i.ID,
-		&i.Name,
 		&i.Url,
 		&i.Category,
 		&i.LastFetchedAt,
@@ -43,7 +36,7 @@ func (q *Queries) CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, e
 }
 
 const getAllFeeds = `-- name: GetAllFeeds :many
-SELECT id, name, url, category, last_fetched_at, created_at, updated_at FROM feeds
+SELECT id, url, category, last_fetched_at, created_at, updated_at FROM feeds
 `
 
 func (q *Queries) GetAllFeeds(ctx context.Context) ([]Feed, error) {
@@ -57,7 +50,6 @@ func (q *Queries) GetAllFeeds(ctx context.Context) ([]Feed, error) {
 		var i Feed
 		if err := rows.Scan(
 			&i.ID,
-			&i.Name,
 			&i.Url,
 			&i.Category,
 			&i.LastFetchedAt,
@@ -78,7 +70,7 @@ func (q *Queries) GetAllFeeds(ctx context.Context) ([]Feed, error) {
 }
 
 const getFeedByID = `-- name: GetFeedByID :one
-SELECT id, name, url, category, last_fetched_at, created_at, updated_at FROM feeds
+SELECT id, url, category, last_fetched_at, created_at, updated_at FROM feeds
 WHERE id = $1
 `
 
@@ -87,7 +79,6 @@ func (q *Queries) GetFeedByID(ctx context.Context, id uuid.UUID) (Feed, error) {
 	var i Feed
 	err := row.Scan(
 		&i.ID,
-		&i.Name,
 		&i.Url,
 		&i.Category,
 		&i.LastFetchedAt,
@@ -98,7 +89,7 @@ func (q *Queries) GetFeedByID(ctx context.Context, id uuid.UUID) (Feed, error) {
 }
 
 const getFeedByUrl = `-- name: GetFeedByUrl :one
-SELECT id, name, url, category, last_fetched_at, created_at, updated_at FROM feeds
+SELECT id, url, category, last_fetched_at, created_at, updated_at FROM feeds
 WHERE url = $1
 `
 
@@ -107,7 +98,6 @@ func (q *Queries) GetFeedByUrl(ctx context.Context, url string) (Feed, error) {
 	var i Feed
 	err := row.Scan(
 		&i.ID,
-		&i.Name,
 		&i.Url,
 		&i.Category,
 		&i.LastFetchedAt,

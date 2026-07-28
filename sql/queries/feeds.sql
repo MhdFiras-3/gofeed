@@ -1,8 +1,7 @@
 -- name: CreateFeed :one
-INSERT INTO feeds (name,url)
+INSERT INTO feeds (url)
 VALUES (
-    $1,
-    $2
+    $1
 )
 ON CONFLICT (url) DO UPDATE
 SET updated_at = NOW()
