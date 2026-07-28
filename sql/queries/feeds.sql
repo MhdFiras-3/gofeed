@@ -4,6 +4,8 @@ VALUES (
     $1,
     $2
 )
+ON CONFLICT (url) DO UPDATE
+SET updated_at = NOW()
 RETURNING *;
 
 -- name: GetAllFeeds :many

@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
 	"github.com/MhdFiras-3/gofeed/internal/database"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 func (cfg *APIConfig) HandlerCreateFeed(w http.ResponseWriter, r *http.Request) {
@@ -35,12 +37,28 @@ func (cfg *APIConfig) HandlerCreateFeed(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	id, ok := r.Context().Value(userIDKey).(uuid.UUID)
+	_, ok := r.Context().Value(userIDKey).(uuid.UUID)
 	if !ok {
 		respWithError(w, http.StatusInternalServerError, "failed missing user id in context")
 		log.Println("failed to get user id from context to create feed")
 		return
 	}
 
-	cfg.DB.CreateFeed(r.Context(), database.CreateFeedParams{})
+	_, err = cfg.DB.CreateFeed(r.Context(), database.CreateFeedParams{
+		Url:  *reqData.URL,
+		Name: *reqData.Name,
+	})
+	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			respWithError(w, http.StatusConflict, "feed already exist")
+			log.Printf("failed to create feed: %v", err)
+			return
+		}
+		respWithError(w, http.StatusInternalServerError, "something went wrong")
+		log.Printf("failed to create feed: %v", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
 }

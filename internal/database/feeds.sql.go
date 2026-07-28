@@ -17,6 +17,8 @@ VALUES (
     $1,
     $2
 )
+ON CONFLICT (url) DO UPDATE
+SET updated_at = NOW()
 RETURNING id, name, url, category, last_fetched_at, created_at, updated_at
 `
 
