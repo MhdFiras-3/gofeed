@@ -88,3 +88,43 @@ func (cfg *APIConfig) HandlerCreateFeed(w http.ResponseWriter, r *http.Request) 
 		UpdatedAt: feedFollowDB.UpdatedAt,
 	})
 }
+
+func (cfg *APIConfig) HandlerGetFeedFollows(w http.ResponseWriter, r *http.Request) {
+	type response struct {
+		ID        uuid.UUID `json:"id"`
+		UserID    uuid.UUID `json:"user_id"`
+		FeedID    uuid.UUID `json:"feed_id"`
+		Name      string    `json:"name"`
+		UserName  string    `json:"user_name"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+	}
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+	if !ok {
+		respWithError(w, http.StatusInternalServerError, "failed missing user id in context")
+		log.Println("failed to get user id from context to get feed follows")
+		return
+	}
+	userFeedFollows, err := cfg.DB.GetFeedFollowsForUser(r.Context(), userID)
+	if err != nil {
+		respWithError(w, http.StatusInternalServerError, "something went wrong")
+		log.Printf("failed to get feed follows from database: %v", err)
+		return
+	}
+	responses := make([]response, 0, len(userFeedFollows))
+
+	for _, userFollows := range userFeedFollows {
+		responses = append(responses, response{
+			ID:        userFollows.ID,
+			UserID:    userFollows.UserID,
+			FeedID:    userFollows.FeedID,
+			Name:      userFollows.Name,
+			UserName:  userFollows.UserName,
+			CreatedAt: userFollows.CreatedAt,
+			UpdatedAt: userFollows.UpdatedAt,
+		})
+	}
+
+	respWithJson(w, http.StatusOK, responses)
+
+}
