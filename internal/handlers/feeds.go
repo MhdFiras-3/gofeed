@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"time"
@@ -127,4 +128,35 @@ func (cfg *APIConfig) HandlerGetFeedFollows(w http.ResponseWriter, r *http.Reque
 
 	respWithJson(w, http.StatusOK, responses)
 
+}
+
+func (cfg *APIConfig) HandlerDeleteFeedFollow(w http.ResponseWriter, r *http.Request) {
+	feedID, err := uuid.Parse(r.PathValue("feedID"))
+	if err != nil {
+		respWithError(w, http.StatusBadRequest, "invalid feed id")
+		log.Println("failed to get feed id from url to delete feed follow")
+		return
+	}
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+	if !ok {
+		respWithError(w, http.StatusInternalServerError, "failed missing user id in context")
+		log.Println("failed to get user id from context to delete feed follow")
+		return
+	}
+
+	_, err = cfg.DB.DeleteFeedFollow(r.Context(), database.DeleteFeedFollowParams{
+		UserID: userID,
+		FeedID: feedID,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			respWithError(w, http.StatusNotFound, "no such feed follow found")
+			log.Println("feed follow not found")
+			return
+		}
+		respWithError(w, http.StatusInternalServerError, "something went wrong")
+		log.Printf("failed to delete feed follow: %v", err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
