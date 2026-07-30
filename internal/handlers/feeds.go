@@ -160,3 +160,38 @@ func (cfg *APIConfig) HandlerDeleteFeedFollow(w http.ResponseWriter, r *http.Req
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (cfg *APIConfig) HandlerGetAllFeeds(w http.ResponseWriter, r *http.Request) {
+	type response struct {
+		ID            uuid.UUID  `json:"id"`
+		Url           string     `json:"url"`
+		Category      string     `json:"category"`
+		LastFetchedAt *time.Time `json:"last_fetched_at"`
+		CreatedAt     time.Time  `json:"created_at"`
+		UpdatedAt     time.Time  `json:"updated_at"`
+	}
+	feeds, err := cfg.DB.GetAllFeeds(r.Context())
+	if err != nil {
+		respWithError(w, http.StatusInternalServerError, "something went wrong")
+		log.Printf("failed to get feeds from database: %v", err)
+		return
+	}
+
+	responses := make([]response, 0, len(feeds))
+
+	for _, feed := range feeds {
+		var lastFetchedAt *time.Time
+		if feed.LastFetchedAt.Valid {
+			lastFetchedAt = &feed.LastFetchedAt.Time
+		}
+		responses = append(responses, response{
+			ID:            feed.ID,
+			Url:           feed.Url,
+			Category:      feed.Category,
+			LastFetchedAt: lastFetchedAt,
+			CreatedAt:     feed.CreatedAt,
+			UpdatedAt:     feed.UpdatedAt,
+		})
+	}
+	respWithJson(w, http.StatusOK, responses)
+}
