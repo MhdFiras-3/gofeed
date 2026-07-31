@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/mail"
 	"net/url"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -99,4 +100,21 @@ func parseURL(rawURL string) error {
 		return errors.New("url must use http or https")
 	}
 	return nil
+}
+
+func parseQueryParamLimit(limit string) int32 {
+	if limit == "" {
+		return 10
+	}
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil {
+		return 10
+	}
+	if limitInt <= 0 {
+		return 10
+	}
+	if limitInt > 40 {
+		return 40
+	}
+	return int32(limitInt)
 }

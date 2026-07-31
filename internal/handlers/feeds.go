@@ -46,7 +46,7 @@ func (cfg *APIConfig) HandlerCreateFeed(w http.ResponseWriter, r *http.Request) 
 
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 	if !ok {
-		respWithError(w, http.StatusInternalServerError, "failed missing user id in context")
+		respWithError(w, http.StatusInternalServerError, "missing user id in context")
 		log.Println("failed to get user id from context to create feed")
 		return
 	}
@@ -102,7 +102,7 @@ func (cfg *APIConfig) HandlerGetFeedFollows(w http.ResponseWriter, r *http.Reque
 	}
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 	if !ok {
-		respWithError(w, http.StatusInternalServerError, "failed missing user id in context")
+		respWithError(w, http.StatusInternalServerError, "missing user id in context")
 		log.Println("failed to get user id from context to get feed follows")
 		return
 	}
@@ -139,7 +139,7 @@ func (cfg *APIConfig) HandlerDeleteFeedFollow(w http.ResponseWriter, r *http.Req
 	}
 	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
 	if !ok {
-		respWithError(w, http.StatusInternalServerError, "failed missing user id in context")
+		respWithError(w, http.StatusInternalServerError, "missing user id in context")
 		log.Println("failed to get user id from context to delete feed follow")
 		return
 	}
@@ -194,4 +194,46 @@ func (cfg *APIConfig) HandlerGetAllFeeds(w http.ResponseWriter, r *http.Request)
 		})
 	}
 	respWithJson(w, http.StatusOK, responses)
+}
+
+func (cfg *APIConfig) HandlerGetFeedByID(w http.ResponseWriter, r *http.Request) {
+	type response struct {
+		ID            uuid.UUID  `json:"id"`
+		Url           string     `json:"url"`
+		Category      string     `json:"category"`
+		LastFetchedAt *time.Time `json:"last_fetched_at"`
+		CreatedAt     time.Time  `json:"created_at"`
+		UpdatedAt     time.Time  `json:"updated_at"`
+	}
+	feedID, err := uuid.Parse(r.PathValue("feedID"))
+	if err != nil {
+		respWithError(w, http.StatusBadRequest, "no such feed id")
+		log.Printf("failed to get feed id from url: %v", err)
+		return
+	}
+
+	feedDB, err := cfg.DB.GetFeedByID(r.Context(), feedID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			respWithError(w, http.StatusNotFound, "no such feed found")
+			log.Println("failed to find feed in database")
+			return
+		}
+		respWithError(w, http.StatusInternalServerError, "something went wrong")
+		log.Printf("failed to get feed from database by id:%v", err)
+		return
+	}
+
+	var lastFetchedAt *time.Time
+	if feedDB.LastFetchedAt.Valid {
+		lastFetchedAt = &feedDB.LastFetchedAt.Time
+	}
+	respWithJson(w, http.StatusOK, response{
+		ID:            feedDB.ID,
+		Url:           feedDB.Url,
+		Category:      feedDB.Category,
+		LastFetchedAt: lastFetchedAt,
+		CreatedAt:     feedDB.CreatedAt,
+		UpdatedAt:     feedDB.UpdatedAt,
+	})
 }
