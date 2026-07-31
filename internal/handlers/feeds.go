@@ -132,7 +132,7 @@ func (cfg *APIConfig) HandlerGetFeedFollows(w http.ResponseWriter, r *http.Reque
 }
 
 func (cfg *APIConfig) HandlerDeleteFeedFollow(w http.ResponseWriter, r *http.Request) {
-	feedID, err := uuid.Parse(r.PathValue("feedID"))
+	feedID, err := uuid.Parse(chi.URLParam(r, "feedID"))
 	if err != nil {
 		respWithError(w, http.StatusBadRequest, "invalid feed id")
 		log.Println("failed to get feed id from url to delete feed follow")

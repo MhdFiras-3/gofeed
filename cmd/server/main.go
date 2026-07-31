@@ -49,12 +49,18 @@ func main() {
 		r.Post("/login", apicfg.HandlerLogin)
 		r.Post("/refresh", apicfg.HandlerRefresh)
 		r.Post("/logout", apicfg.HandlerLogOut)
+		r.Get("/feeds", apicfg.HandlerGetAllFeeds)
+		r.Get("/feeds/{feedID}", apicfg.HandlerGetFeedByID)
 
 		r.Group(func(r chi.Router) {
 			r.Use(apicfg.MiddlewareAuth)
 			r.Get("/me", apicfg.HandlerGetCurrentUser)
 			r.Patch("/me", apicfg.HandlerUpdateUser)
 			r.Delete("/me", apicfg.HandlerDeleteUser)
+			r.Post("/feeds", apicfg.HandlerCreateFeed)
+			r.Get("/follows", apicfg.HandlerGetFeedFollows)
+			r.Delete("/follows/{feedID}", apicfg.HandlerDeleteFeedFollow)
+			r.Get("/posts", apicfg.HandlerGetPostsForUser)
 		})
 
 	})
