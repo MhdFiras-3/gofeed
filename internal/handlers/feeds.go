@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/MhdFiras-3/gofeed/internal/database"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -205,7 +206,7 @@ func (cfg *APIConfig) HandlerGetFeedByID(w http.ResponseWriter, r *http.Request)
 		CreatedAt     time.Time  `json:"created_at"`
 		UpdatedAt     time.Time  `json:"updated_at"`
 	}
-	feedID, err := uuid.Parse(r.PathValue("feedID"))
+	feedID, err := uuid.Parse(chi.URLParam(r, "feedID"))
 	if err != nil {
 		respWithError(w, http.StatusBadRequest, "no such feed id")
 		log.Printf("failed to get feed id from url: %v", err)
