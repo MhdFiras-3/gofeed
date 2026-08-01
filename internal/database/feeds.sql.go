@@ -110,7 +110,7 @@ func (q *Queries) GetFeedByUrl(ctx context.Context, url string) (Feed, error) {
 const getNextFeedToFetch = `-- name: GetNextFeedToFetch :one
 SELECT url,id FROM feeds
 ORDER BY last_fetched_at ASC NULLS FIRST
-LIMIT 1
+LIMIT $1
 `
 
 type GetNextFeedToFetchRow struct {
@@ -118,8 +118,8 @@ type GetNextFeedToFetchRow struct {
 	ID  uuid.UUID
 }
 
-func (q *Queries) GetNextFeedToFetch(ctx context.Context) (GetNextFeedToFetchRow, error) {
-	row := q.db.QueryRowContext(ctx, getNextFeedToFetch)
+func (q *Queries) GetNextFeedToFetch(ctx context.Context, limit int32) (GetNextFeedToFetchRow, error) {
+	row := q.db.QueryRowContext(ctx, getNextFeedToFetch, limit)
 	var i GetNextFeedToFetchRow
 	err := row.Scan(&i.Url, &i.ID)
 	return i, err
