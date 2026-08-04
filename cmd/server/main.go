@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/MhdFiras-3/gofeed/internal/database"
 	"github.com/MhdFiras-3/gofeed/internal/handlers"
+	"github.com/MhdFiras-3/gofeed/internal/scraper"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
@@ -40,6 +42,7 @@ func main() {
 		DBConn:    dbConnection,
 		JWTSecret: os.Getenv("JWT_SECRET"),
 		JWTExpiry: time.Hour,
+		Ticker:    10 * time.Second,
 	}
 
 	r := chi.NewRouter()
@@ -64,7 +67,7 @@ func main() {
 		})
 
 	})
-
+	go scraper.StartScraping(context.Background(), apicfg.DB, apicfg.Ticker)
 	fmt.Printf("serving on %s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
 }

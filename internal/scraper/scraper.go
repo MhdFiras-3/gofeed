@@ -9,10 +9,10 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/MhdFiras-3/gofeed/internal/database"
-	"github.com/MhdFiras-3/gofeed/internal/handlers"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
@@ -49,13 +49,13 @@ func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 	return rssFeedData, nil
 }
 
-func scrapeFeed(ctx context.Context, cfg handlers.APIConfig, feedURL string, feedID uuid.UUID) error {
+func scrapeFeed(ctx context.Context, DB *database.Queries, feedURL string, feedID uuid.UUID) error {
 	rssDataFeed, err := fetchFeed(ctx, feedURL)
 	if err != nil {
 		return err
 	}
 
-	if err = cfg.DB.MarkFeedFetched(ctx, feedID); err != nil {
+	if err = DB.MarkFeedFetched(ctx, feedID); err != nil {
 		return err
 	}
 	for _, item := range rssDataFeed.Channel.Item {
@@ -78,7 +78,7 @@ func scrapeFeed(ctx context.Context, cfg handlers.APIConfig, feedURL string, fee
 
 		}
 
-		_, err = cfg.DB.CreatePost(ctx, database.CreatePostParams{
+		_, err = DB.CreatePost(ctx, database.CreatePostParams{
 			Title:       item.Title,
 			Url:         item.Link,
 			Description: itemNullDescrip,
@@ -96,4 +96,29 @@ func scrapeFeed(ctx context.Context, cfg handlers.APIConfig, feedURL string, fee
 
 	}
 	return nil
+}
+
+func StartScraping(ctx context.Context, DB *database.Queries, tick time.Duration) {
+	var wg sync.WaitGroup
+	ticker := time.NewTicker(tick)
+	defer ticker.Stop()
+
+	for ; ; <-ticker.C {
+		feeds, err := DB.GetNextFeedsToFetch(ctx, 2)
+		if err != nil {
+			log.Printf("failed to fetch feeds to scrape: %v", err)
+			continue
+		}
+		for _, feed := range feeds {
+			wg.Add(1)
+			go func(feedURL string, feedID uuid.UUID) {
+				defer wg.Done()
+				scrapeFeed(ctx, DB, feedURL, feedID)
+
+			}(feed.Url, feed.ID)
+
+		}
+		wg.Wait()
+	}
+
 }

@@ -107,22 +107,38 @@ func (q *Queries) GetFeedByUrl(ctx context.Context, url string) (Feed, error) {
 	return i, err
 }
 
-const getNextFeedToFetch = `-- name: GetNextFeedToFetch :one
+const getNextFeedsToFetch = `-- name: GetNextFeedsToFetch :many
 SELECT url,id FROM feeds
 ORDER BY last_fetched_at ASC NULLS FIRST
 LIMIT $1
 `
 
-type GetNextFeedToFetchRow struct {
+type GetNextFeedsToFetchRow struct {
 	Url string
 	ID  uuid.UUID
 }
 
-func (q *Queries) GetNextFeedToFetch(ctx context.Context, limit int32) (GetNextFeedToFetchRow, error) {
-	row := q.db.QueryRowContext(ctx, getNextFeedToFetch, limit)
-	var i GetNextFeedToFetchRow
-	err := row.Scan(&i.Url, &i.ID)
-	return i, err
+func (q *Queries) GetNextFeedsToFetch(ctx context.Context, limit int32) ([]GetNextFeedsToFetchRow, error) {
+	rows, err := q.db.QueryContext(ctx, getNextFeedsToFetch, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetNextFeedsToFetchRow
+	for rows.Next() {
+		var i GetNextFeedsToFetchRow
+		if err := rows.Scan(&i.Url, &i.ID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const markFeedFetched = `-- name: MarkFeedFetched :exec

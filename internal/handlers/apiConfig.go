@@ -12,4 +12,5 @@ type APIConfig struct {
 	DBConn    *sql.DB
 	JWTSecret string
 	JWTExpiry time.Duration
+	Ticker    time.Duration
 }
