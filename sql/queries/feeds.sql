@@ -24,7 +24,7 @@ WHERE id = $1;
 SELECT * FROM feeds
 WHERE id = $1;
 
--- name: GetNextFeedToFetch :one
+-- name: GetNextFeedsToFetch :many
 SELECT url,id FROM feeds
 ORDER BY last_fetched_at ASC NULLS FIRST
 LIMIT $1;
