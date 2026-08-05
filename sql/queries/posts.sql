@@ -19,4 +19,5 @@ LIMIT $2;
 -- name: GetPostsURLsByFeedID :many
 SELECT url from posts
 WHERE feed_id = $1
-ORDER BY updated_at DESC;
+ORDER BY updated_at DESC
+LIMIT 50;

@@ -103,6 +103,7 @@ const getPostsURLsByFeedID = `-- name: GetPostsURLsByFeedID :many
 SELECT url from posts
 WHERE feed_id = $1
 ORDER BY updated_at DESC
+LIMIT 50
 `
 
 func (q *Queries) GetPostsURLsByFeedID(ctx context.Context, feedID uuid.UUID) ([]string, error) {

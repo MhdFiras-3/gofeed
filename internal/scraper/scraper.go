@@ -58,7 +58,22 @@ func scrapeFeed(ctx context.Context, DB *database.Queries, feedURL string, feedI
 	if err = DB.MarkFeedFetched(ctx, feedID); err != nil {
 		return err
 	}
+
+	postURLs, err := DB.GetPostsURLsByFeedID(ctx, feedID)
+	if err != nil {
+		log.Printf("failed to get posts urls: %v", err)
+	}
+	postURLsMap := map[string]struct{}{}
+
+	for _, postURL := range postURLs {
+		postURLsMap[postURL] = struct{}{}
+	}
+
 	for _, item := range rssDataFeed.Channel.Item {
+
+		if _, exists := postURLsMap[item.Link]; exists {
+			continue
+		}
 
 		itemNullDescrip := sql.NullString{
 			String: item.Description,
