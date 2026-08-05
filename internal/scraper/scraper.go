@@ -66,14 +66,19 @@ func scrapeFeed(ctx context.Context, DB *database.Queries, feedURL string, feedI
 		}
 		itemNullPub := sql.NullTime{}
 		if item.PubDate != "" {
-			time, err := time.Parse("2006-01-02 15:04:05", item.PubDate)
-			if err != nil {
-				log.Printf("failed to parse time for post url: %s", item.Link)
-			} else {
-				itemNullPub = sql.NullTime{
-					Time:  time,
-					Valid: true,
+			layouts := []string{time.RFC1123, time.RFC1123Z, time.RFC3339}
+			for _, layout := range layouts {
+				parsedTime, err := time.Parse(layout, item.PubDate)
+				if err != nil {
+					log.Printf("failed to parse time for post,title:%s, url: %s,layout: %s, error: %v", item.Title, item.Link, layout, err)
+				} else {
+					itemNullPub = sql.NullTime{
+						Time:  parsedTime,
+						Valid: true,
+					}
+					break
 				}
+
 			}
 
 		}
