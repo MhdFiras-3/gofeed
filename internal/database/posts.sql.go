@@ -98,3 +98,32 @@ func (q *Queries) GetPostsForUser(ctx context.Context, arg GetPostsForUserParams
 	}
 	return items, nil
 }
+
+const getPostsURLsByFeedID = `-- name: GetPostsURLsByFeedID :many
+SELECT url from posts
+WHERE feed_id = $1
+ORDER BY updated_at DESC
+`
+
+func (q *Queries) GetPostsURLsByFeedID(ctx context.Context, feedID uuid.UUID) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getPostsURLsByFeedID, feedID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var url string
+		if err := rows.Scan(&url); err != nil {
+			return nil, err
+		}
+		items = append(items, url)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
