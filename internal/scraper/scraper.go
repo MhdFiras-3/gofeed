@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"html"
 	"io"
 	"log"
@@ -54,7 +55,8 @@ func scrapeFeed(ctx context.Context, DB *database.Queries, feedURL string, feedI
 	if err != nil {
 		return err
 	}
-
+	// Mark fetched before processing so a single broken feed doesn't
+	// get retried until next batch.
 	if err = DB.MarkFeedFetched(ctx, feedID); err != nil {
 		return err
 	}
@@ -79,23 +81,9 @@ func scrapeFeed(ctx context.Context, DB *database.Queries, feedURL string, feedI
 			String: item.Description,
 			Valid:  item.Description != "",
 		}
-		itemNullPub := sql.NullTime{}
-		if item.PubDate != "" {
-			layouts := []string{time.RFC1123, time.RFC1123Z, time.RFC3339}
-			for _, layout := range layouts {
-				parsedTime, err := time.Parse(layout, item.PubDate)
-				if err != nil {
-					log.Printf("failed to parse time for post,title:%s, url: %s,layout: %s, error: %v", item.Title, item.Link, layout, err)
-				} else {
-					itemNullPub = sql.NullTime{
-						Time:  parsedTime,
-						Valid: true,
-					}
-					break
-				}
-
-			}
-
+		itemNullPub, err := parseTime(item.PubDate)
+		if err != nil {
+			log.Printf("%v", err)
 		}
 
 		_, err = DB.CreatePost(ctx, database.CreatePostParams{
@@ -141,4 +129,22 @@ func StartScraping(ctx context.Context, DB *database.Queries, tick time.Duration
 		wg.Wait()
 	}
 
+}
+
+func parseTime(rawLayout string) (sql.NullTime, error) {
+	if rawLayout == "" {
+		return sql.NullTime{}, nil
+	}
+	layouts := []string{time.RFC1123, time.RFC1123Z, time.RFC3339}
+	for _, layout := range layouts {
+		parsedTime, err := time.Parse(layout, rawLayout)
+		if err == nil {
+			return sql.NullTime{
+				Time:  parsedTime,
+				Valid: true,
+			}, nil
+
+		}
+	}
+	return sql.NullTime{}, fmt.Errorf("failed to find time layour for post,date: %s", rawLayout)
 }
