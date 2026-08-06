@@ -81,7 +81,7 @@ func scrapeFeed(ctx context.Context, DB *database.Queries, feedURL string, feedI
 			String: item.Description,
 			Valid:  item.Description != "",
 		}
-		itemNullPub, err := parseTime(item.PubDate)
+		itemNullPub, err := parsePubTime(item.PubDate)
 		if err != nil {
 			log.Printf("%v", err)
 		}
@@ -131,7 +131,7 @@ func StartScraping(ctx context.Context, DB *database.Queries, tick time.Duration
 
 }
 
-func parseTime(rawLayout string) (sql.NullTime, error) {
+func parsePubTime(rawLayout string) (sql.NullTime, error) {
 	if rawLayout == "" {
 		return sql.NullTime{}, nil
 	}
