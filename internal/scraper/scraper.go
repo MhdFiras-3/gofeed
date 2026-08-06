@@ -70,10 +70,12 @@ func scrapeFeed(ctx context.Context, DB *database.Queries, feedURL string, feedI
 	for _, postURL := range postURLs {
 		postURLsMap[postURL] = struct{}{}
 	}
+	var created, skipped, failed int
 
 	for _, item := range rssDataFeed.Channel.Item {
 
 		if _, exists := postURLsMap[item.Link]; exists {
+			skipped++
 			continue
 		}
 
@@ -81,9 +83,9 @@ func scrapeFeed(ctx context.Context, DB *database.Queries, feedURL string, feedI
 			String: item.Description,
 			Valid:  item.Description != "",
 		}
-		itemNullPub, err := parsePubTime(item.PubDate)
+		itemNullPub, parseErr := parsePubTime(item.PubDate)
 		if err != nil {
-			log.Printf("%v", err)
+			log.Printf("%v", parseErr)
 		}
 
 		_, err = DB.CreatePost(ctx, database.CreatePostParams{
@@ -97,12 +99,17 @@ func scrapeFeed(ctx context.Context, DB *database.Queries, feedURL string, feedI
 			var pqErr *pq.Error
 			if errors.As(err, &pqErr) && pqErr.Code == "23505" {
 				log.Printf("unique violation on constraint: post already exist id: %s", feedID)
+				skipped++
 				continue
 			}
 			log.Printf("failed to create post: %v, url: %s", err, item.Link)
+			failed++
+			continue
 		}
+		created++
 
 	}
+	log.Printf("scraped feed %s: %d created, %d skipped, %d failed", feedID, created, skipped, failed)
 	return nil
 }
 
