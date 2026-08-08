@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"log"
 	"os"
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/MhdFiras-3/gofeed/internal/database"
@@ -16,20 +18,23 @@ var testDB *sql.DB
 var testCfg *APIConfig
 
 func TestMain(m *testing.M) {
-	godotenv.Load()
+	if err := godotenv.Load(filepath.Join(projectRootDir(), ".env")); err != nil {
+		log.Printf("could not load .env: %v", err)
+	}
 
 	testDBURL := os.Getenv("TEST_DB_URL")
+	log.Printf("using DB URL: %s", testDBURL)
 
 	db, err := sql.Open("postgres", testDBURL)
 	if err != nil {
 		log.Fatalf("failed to open test db: %v", err)
 	}
 	testDB = db
-
+	migrationsPath := filepath.Join(projectRootDir(), "sql/migrations")
 	if err := goose.SetDialect("postgres"); err != nil {
 		log.Fatalf("failed to set dialect: %v", err)
 	}
-	if err := goose.Up(testDB, "sql/migrations"); err != nil {
+	if err := goose.Up(testDB, migrationsPath); err != nil {
 		log.Fatalf("failed to run up migrations: %v", err)
 	}
 
@@ -40,10 +45,15 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 
-	if err := goose.DownTo(testDB, "sql/migrations", 0); err != nil {
+	if err := goose.DownTo(testDB, migrationsPath, 0); err != nil {
 		log.Fatalf("failed to run down migrations: %v", err)
 	}
 
 	testDB.Close()
 	os.Exit(code)
+}
+
+func projectRootDir() string {
+	_, file, _, _ := runtime.Caller(0)
+	return filepath.Join(filepath.Dir(file), "..", "..")
 }
