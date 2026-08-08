@@ -14,7 +14,6 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-var testDB *sql.DB
 var testCfg *APIConfig
 
 func TestMain(m *testing.M) {
@@ -29,27 +28,26 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("failed to open test db: %v", err)
 	}
-	testDB = db
 	migrationsPath := filepath.Join(projectRootDir(), "sql/migrations")
 	if err := goose.SetDialect("postgres"); err != nil {
 		log.Fatalf("failed to set dialect: %v", err)
 	}
-	if err := goose.Up(testDB, migrationsPath); err != nil {
+	if err := goose.Up(db, migrationsPath); err != nil {
 		log.Fatalf("failed to run up migrations: %v", err)
 	}
 
 	testCfg = &APIConfig{
-		DB:     database.New(testDB),
-		DBConn: testDB,
+		DB:     database.New(db),
+		DBConn: db,
 	}
 
 	code := m.Run()
 
-	if err := goose.DownTo(testDB, migrationsPath, 0); err != nil {
+	if err := goose.DownTo(db, migrationsPath, 0); err != nil {
 		log.Fatalf("failed to run down migrations: %v", err)
 	}
 
-	testDB.Close()
+	db.Close()
 	os.Exit(code)
 }
 
