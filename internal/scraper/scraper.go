@@ -68,7 +68,7 @@ func scrapeFeed(ctx context.Context, DB *database.Queries, feedURL string, feedI
 	postURLsMap := map[string]struct{}{}
 
 	for _, postURL := range postURLs {
-		postURLsMap[postURL] = struct{}{}
+		postURLsMap[postURL] = struct{}{} // storing all posts for that feed ID so we can check if it exists
 	}
 	var created, skipped, failed int
 

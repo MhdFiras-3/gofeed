@@ -101,3 +101,65 @@ func TestParsePubTime(t *testing.T) {
 		})
 	}
 }
+func TestScrapeFeed(t *testing.T) {
+
+	mockXML := `<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+<channel>
+	<title>Test Feed</title>
+	<description>Test Feed Description</description>
+	<item>
+		<title>Post 1</title>
+		<link>https://example.com/post-1</link>
+		<description>First post description</description>
+		<pubDate>Mon, 02 Jan 2006 15:04:05 MST</pubDate>
+	</item>
+	<item>
+		<title>Post 2</title>
+		<link>https://example.com/post-2</link>
+		<description>Second post description</description>
+		<pubDate>Mon, 02 Jan 2006 15:04:05 MST</pubDate>
+	</item>
+</channel>
+</rss>` // two items (posts)
+
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/xml")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(mockXML))
+	}))
+	defer mockServer.Close()
+
+	ctx := context.Background()
+	feed, err := testCfg.DB.CreateFeed(ctx, mockServer.URL)
+	if err != nil {
+		t.Fatalf("failed to create feed in DB: %v", err)
+	}
+	// Verify the two posts should get created (console log)
+	err = scrapeFeed(ctx, testCfg.DB, mockServer.URL, feed.ID)
+	if err != nil {
+		t.Fatalf("expected no error scraping feed, got %v", err)
+	}
+
+	posts, err := testCfg.DB.GetPostsURLsByFeedID(ctx, feed.ID)
+	if err != nil {
+		t.Fatalf("failed to fetch posts by feed ID: %v", err)
+	}
+	if len(posts) != 2 {
+		t.Fatalf("expected 2 posts in DB, got %d", len(posts))
+	}
+	// Verify the two posts should get skipped (console log)
+	err = scrapeFeed(ctx, testCfg.DB, mockServer.URL, feed.ID)
+	if err != nil {
+		t.Fatalf("expected no error on duplicate scrape, got %v", err)
+	}
+
+	// Verify post count remains 2 (no duplicates added)
+	postsAfterSecondScrape, err := testCfg.DB.GetPostsURLsByFeedID(ctx, feed.ID)
+	if err != nil {
+		t.Fatalf("failed to fetch posts by feed ID: %v", err)
+	}
+	if len(postsAfterSecondScrape) != 2 {
+		t.Errorf("expected still 2 posts in DB after duplicate run, got %d", len(postsAfterSecondScrape))
+	}
+}
