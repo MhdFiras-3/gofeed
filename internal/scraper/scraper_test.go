@@ -1,0 +1,103 @@
+package scraper
+
+import (
+	"context"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+)
+
+func TestFetchFeed(t *testing.T) {
+	mockXML := `<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+<channel>
+	<title>Go & Tech Blog</title>
+	<description>Latest news & updates</description>
+	<item>
+		<title>Go 1.22 Released & Features</title>
+		<link>https://example.com/go122</link>
+		<description>Exciting & new features</description>
+		<pubDate>Mon, 02 Jan 2006 15:04:05 MST</pubDate>
+	</item>
+</channel>
+</rss>`
+
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/xml")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(mockXML))
+	}))
+	defer testServer.Close()
+
+	feed, err := fetchFeed(context.Background(), testServer.URL)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if feed.Channel.Title != "Go & Tech Blog" {
+		t.Errorf("expected title 'Go & Tech Blog', got '%s'", feed.Channel.Title)
+	}
+	if feed.Channel.Description != "Latest news & updates" {
+		t.Errorf("expected description 'Latest news & updates', got '%s'", feed.Channel.Description)
+	}
+
+	if len(feed.Channel.Item) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(feed.Channel.Item))
+	}
+
+	item := feed.Channel.Item[0]
+	if item.Title != "Go 1.22 Released & Features" {
+		t.Errorf("expected item title 'Go 1.22 Released & Features', got '%s'", item.Title)
+	}
+	if item.Link != "https://example.com/go122" {
+		t.Errorf("expected item link 'https://example.com/go122', got '%s'", item.Link)
+	}
+}
+
+func TestParsePubTime(t *testing.T) {
+	tests := []struct {
+		name        string
+		rawTime     string
+		expectValid bool
+		expectErr   bool
+	}{
+		{
+			name:        "RFC1123 format",
+			rawTime:     "Mon, 02 Jan 2006 15:04:05 MST",
+			expectValid: true,
+			expectErr:   false,
+		},
+		{
+			name:        "RFC3339 format",
+			rawTime:     "2006-01-02T15:04:05Z",
+			expectValid: true,
+			expectErr:   false,
+		},
+		{
+			name:        "Empty string",
+			rawTime:     "",
+			expectValid: false,
+			expectErr:   false,
+		},
+		{
+			name:        "Invalid date format",
+			rawTime:     "invalid-date-string",
+			expectValid: false,
+			expectErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := parsePubTime(tt.rawTime)
+
+			if (err != nil) != tt.expectErr {
+				t.Errorf("expected err: %v, got: %v", tt.expectErr, err)
+			}
+
+			if res.Valid != tt.expectValid {
+				t.Errorf("expected Valid field %v, got %v", tt.expectValid, res.Valid)
+			}
+		})
+	}
+}
