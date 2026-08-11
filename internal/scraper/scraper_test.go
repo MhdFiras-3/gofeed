@@ -11,12 +11,12 @@ func TestFetchFeed(t *testing.T) {
 	mockXML := `<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0">
 <channel>
-	<title>Go & Tech Blog</title>
-	<description>Latest news & updates</description>
+	<title>Go &amp; Tech Blog</title>
+	<description>Latest news &amp; updates</description>
 	<item>
-		<title>Go 1.22 Released & Features</title>
+		<title>Go 1.22 Released &amp; Features</title>
 		<link>https://example.com/go122</link>
-		<description>Exciting & new features</description>
+		<description>Exciting &amp; new features</description>
 		<pubDate>Mon, 02 Jan 2006 15:04:05 MST</pubDate>
 	</item>
 </channel>
