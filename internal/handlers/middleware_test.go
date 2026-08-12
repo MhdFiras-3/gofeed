@@ -13,7 +13,7 @@ import (
 func TestMiddlewareAuth(t *testing.T) {
 
 	userID := uuid.New()
-	token, err := auth.MakeJWT(userID, "test-secret", time.Hour)
+	token, err := auth.MakeJWT(userID, testCfg.JWTSecret, time.Hour)
 	if err != nil {
 		t.Fatalf("failed to make JWT: %v", err)
 	}
