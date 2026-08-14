@@ -46,7 +46,7 @@ graph TD
 
 - [Go](https://go.dev/doc/install) (v1.21 or later)
 - [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/)
-- [goose] (https://github.com/pressly/goose) for database migrations
+- [goose](https://github.com/pressly/goose) for database migrations
 
 
 ### Clone & Configure Environment
@@ -58,8 +58,8 @@ git clone https://github.com/MhdFiras-3/gofeed.git
 cd gofeed
 ```
 
-Create a `.env` file in the root directory:
-
+`.env`:
+```env
 PORT=8080
 DB_HOST=localhost
 DB_PORT=5432
@@ -68,6 +68,8 @@ DB_PASSWORD=yourpassword
 DB_NAME=gofeed
 TEST_DB_URL=postgres://postgres:yourpassword@localhost:5432/gofeed_test?sslmode=disable
 JWT_SECRET=yoursecret
+DUMMY_HASH="$argon2id$v=19$m=65536,t=1,p=12$LpTO8GOk8ajNAFczIs12uQ$e48btjY28JEWiIfEDYcJBjb1GLBZGqXoOyrClQ9EIr0"
+```
 
 
 Start PostgreSQL Container
