@@ -72,7 +72,7 @@ DUMMY_HASH="$argon2id$v=19$m=65536,t=1,p=12$LpTO8GOk8ajNAFczIs12uQ$e48btjY28JEWi
 ```
 
 
-Start PostgreSQL Container
+Start PostgreSQL Container:
 
 ```bash
 docker compose up -d
@@ -82,3 +82,28 @@ Apply schema migrations using goose and run the API server:
 goose -dir sql/migrations postgres "postgres://postgres:yourpassword@localhost:5432/gofeed?sslmode=disable" up
 go run cmd/server/main.go
 ```
+To run :
+```bash
+go test -p 1 ./...
+```
+## API Endpoints Summary
+#### Public Routes
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/v1/register` | Register a new user account |
+| `POST` | `/api/v1/login` | Authenticate user and receive JWT access token |
+| `POST` | `/api/v1/refresh` | Refresh access token using refresh token |
+| `POST` | `/api/v1/logout` | Revoke refresh token / logout |
+| `GET` | `/api/v1/feeds` | Get all created RSS feeds |
+| `GET` | `/api/v1/feeds/{feedID}` | Get a specific RSS feed by ID |
+
+#### Protected Routes
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/me` | Retrieve current user profile |
+| `PATCH` | `/api/v1/me` | Update user profile details |
+| `DELETE` | `/api/v1/me` | Delete current user account |
+| `POST` | `/api/v1/feeds` | Create a new RSS feed and automatically follow it |
+| `GET` | `/api/v1/follows` | Get all feed follows for current user |
+| `DELETE` | `/api/v1/follows/{feedID}` | Unfollow a feed by ID |
+| `GET` | `/api/v1/posts` | Fetch RSS posts for followed feeds |
