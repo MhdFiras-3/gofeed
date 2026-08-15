@@ -7,6 +7,8 @@ package database
 
 import (
 	"context"
+	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -29,22 +31,34 @@ func (q *Queries) CheckPostRead(ctx context.Context, arg CheckPostReadParams) (P
 }
 
 const getPostReadsPerUser = `-- name: GetPostReadsPerUser :many
-SELECT posts.id, posts.title, posts.url, posts.description, posts.feed_id, posts.created_at, posts.updated_at, posts.published_at 
+SELECT posts.id, posts.title, posts.url, posts.description, posts.feed_id, posts.created_at, posts.updated_at, posts.published_at,post_reads.read_at 
 FROM post_reads
 INNER JOIN posts ON post_reads.post_id = posts.id
 WHERE post_reads.user_id = $1
 ORDER BY post_reads.read_at DESC
 `
 
-func (q *Queries) GetPostReadsPerUser(ctx context.Context, userID uuid.UUID) ([]Post, error) {
+type GetPostReadsPerUserRow struct {
+	ID          uuid.UUID
+	Title       string
+	Url         string
+	Description sql.NullString
+	FeedID      uuid.UUID
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	PublishedAt sql.NullTime
+	ReadAt      time.Time
+}
+
+func (q *Queries) GetPostReadsPerUser(ctx context.Context, userID uuid.UUID) ([]GetPostReadsPerUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, getPostReadsPerUser, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Post
+	var items []GetPostReadsPerUserRow
 	for rows.Next() {
-		var i Post
+		var i GetPostReadsPerUserRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Title,
@@ -54,6 +68,7 @@ func (q *Queries) GetPostReadsPerUser(ctx context.Context, userID uuid.UUID) ([]
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.PublishedAt,
+			&i.ReadAt,
 		); err != nil {
 			return nil, err
 		}

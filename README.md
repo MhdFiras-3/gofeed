@@ -82,7 +82,7 @@ Apply schema migrations using goose and run the API server:
 goose -dir sql/migrations postgres "postgres://postgres:yourpassword@localhost:5432/gofeed?sslmode=disable" up
 go run cmd/server/main.go
 ```
-To run :
+To run tests:
 ```bash
 go test -p 1 ./...
 ```
