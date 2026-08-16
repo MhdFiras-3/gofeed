@@ -107,3 +107,5 @@ go test -p 1 ./...
 | `GET` | `/api/v1/follows` | Get all feed follows for current user |
 | `DELETE` | `/api/v1/follows/{feedID}` | Unfollow a feed by ID |
 | `GET` | `/api/v1/posts` | Fetch RSS posts for followed feeds |
+| `POST` | `/api/v1/posts/{postID}/read` | Mark a specific post as read |
+| `GET` | `/api/v1/posts/read` | Retrieve all posts marked as read by the user |
