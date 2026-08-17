@@ -27,6 +27,31 @@
 
 ---
 
+## 📐 Key Design Decisions & Trade-Offs
+
+### 1. Atomic Operations via Database Transactions
+Multi-step database state changes are wrapped in explicit database transactions:
+- **Feed Creation (`HandlerCreateFeed`):** Creating a feed and automatically following it must be an atomic operation. If inserting the `feed_follows` fails, the entire transaction is rolled back, preventing orphaned feed records without owners.
+- **Refresh Token Rotation (`HandlerRefresh`):** During token rotation, revoking the existing refresh token and persisting the newly issued refresh token must succeed together. A transaction prevents race conditions where a user loses their session mid-rotation or an old token remains valid after failure.
+
+### 2. Mitigation of Timing Attacks on Authentication
+A server that immediately returns `401 Unauthorized` when an email does not exist responds significantly faster than when performing an expensive cryptographic hash comparison for an existing user. 
+- To prevent **User Enumeration via Timing Attacks**, `HandlerLogin` executes an Argon2id comparison against a dummy hash (`DUMMY_HASH`) whenever a user lookup returns no rows. 
+- This ensures constant-time response latency regardless of whether an email is registered.
+
+### 3. Error Handling Trade-Offs in Background Scraping
+The `scrapeFeed` background worker prioritizes system resiliency over fail-fast behavior:
+- **Batch Processing:** When parsing a feed with multiple items, a single malformed post or duplicate URL does not abort the batch. Instead, individual errors are logged, the failed post is skipped, and remaining valid posts in the feed are processed and inserted.
+- **Feed Polling Safety:** The feed's `last_fetched_at` timestamp is updated immediately before post insertion. This prevents a persistently broken feed or corrupted post payload from trapping the scraper in an infinite retry loop during subsequent fetch cycles.
+
+### 4. Explicit API Package Facing Structs vs. Embedding Database Models
+Handlers explicitly define custom `requestParam` and `response` struct types rather than directly embedding or exposing `sqlc`-generated database structs:
+- **Encapsulation & Security:** Internal schema details are never inadvertently leaked to clients via JSON serialization.
+- **Decoupled Contracts:** Changes to the underlying database schema or migrations do not directly break external client contracts, allowing independent evolution of the API and database layers.
+- **Null-Value Handling:** Custom response types map `sql.NullString` and `sql.NullTime` into clean nullable JSON primitives (e.g., `*string`, `*time.Time`) rather than exposing raw database struct types to the caller.
+
+---
+
 ## 🏗️ System Architecture
 
 ```mermaid
@@ -40,6 +65,8 @@ graph TD
         Scraper -->|Insert New Posts| DB
     end
 ```
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -86,6 +113,8 @@ To run tests:
 ```bash
 go test -p 1 ./...
 ```
+---
+
 ## API Endpoints Summary
 #### Public Routes
 | Method | Endpoint | Description |
@@ -109,3 +138,9 @@ go test -p 1 ./...
 | `GET` | `/api/v1/posts` | Fetch RSS posts for followed feeds |
 | `POST` | `/api/v1/posts/{postID}/read` | Mark a specific post as read |
 | `GET` | `/api/v1/posts/read` | Retrieve all posts marked as read by the user |
+
+---
+
+## 📄 License
+
+This project is open-source and available under the [MIT License](LICENSE).
