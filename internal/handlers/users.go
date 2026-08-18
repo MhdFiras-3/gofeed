@@ -80,8 +80,7 @@ func (cfg *APIConfig) HandlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	var reqData requestParam
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&reqData); err != nil {
-
-		respWithError(w, http.StatusInternalServerError, "something went wrong")
+		respWithError(w, http.StatusBadRequest, "invalid request payload")
 		return
 	}
 	if errs := validateInput(reqData.Name, reqData.Email, reqData.Password); len(errs) > 0 {
