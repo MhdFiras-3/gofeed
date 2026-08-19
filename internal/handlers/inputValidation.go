@@ -52,10 +52,10 @@ func parsePassword(password string) error {
 		return errors.New("password cannot be empty")
 	}
 	if len(password) > 100 {
-		return errors.New("password too long")
+		return errors.New("password too long, must be less than 100 characters")
 	}
 	if len(password) < 20 {
-		return errors.New("password too short")
+		return errors.New("password too short,must be atleast 20 characters")
 	}
 
 	return nil
