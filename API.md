@@ -176,7 +176,7 @@ or database token storage fails.
 {
     "error": "failed to save refresh token"
 }
-
+```
 ---
 
 ### Refresh Tokens
