@@ -131,7 +131,7 @@ func (cfg *APIConfig) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 	var reqData requestParam
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&reqData); err != nil {
-		respWithError(w, http.StatusInternalServerError, "something went wrong")
+		respWithError(w, http.StatusBadRequest, "invalid request payload")
 		return
 	}
 	DBUser, err := cfg.DB.GetUserByEmail(r.Context(), reqData.Email)
@@ -281,7 +281,7 @@ func (cfg *APIConfig) HandlerUpdateUser(w http.ResponseWriter, r *http.Request) 
 	var reqData requestParam
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&reqData); err != nil {
-		respWithError(w, http.StatusInternalServerError, "something went wrong")
+		respWithError(w, http.StatusBadRequest, "invalid request payload")
 		return
 	}
 
