@@ -1,5 +1,15 @@
 # API Documentation
 
+## Endpoints Summary
+
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :--- |
+| `POST` | [`/api/v1/register`](#register-user) | Create a new user account | No |
+| `POST` | [`/api/v1/login`](#login-user) | Authenticate and obtain tokens | No |
+| `POST` | [`/api/v1/refresh`](#refresh-tokens) | Rotate refresh token and get a new access token | Yes (refresh token)|
+
+---
+
 ## Authentication & Users
 
 ### Register User
@@ -85,6 +95,7 @@ Returned when an unhandled server error occurs (e.g., password hashing failure o
   "error": "something went wrong"
 }
 ```
+---
 
 ### Login User
 
@@ -165,3 +176,61 @@ or database token storage fails.
 {
     "error": "failed to save refresh token"
 }
+
+---
+
+### Refresh Tokens
+
+Rotates an existing, valid refresh token and issues a new access token (JWT) along with a replacement refresh token.
+
+* **URL:** `/api/v1/refresh`
+* **Method:** `POST`
+* **Authentication Required:** Yes
+* **Headers:**
+* `Authorization: Bearer <refresh_token>`
+
+---
+
+#### Request Body
+None.
+
+---
+
+#### Responses
+
+##### `200 OK`
+Returned when tokens are successfully rotated.
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "3a7b18e4-84bf-4dc7-b248-cb5897c5f899"
+}
+```
+
+##### `400 Bad Request`
+Returned when the `Authorization` header is missing, malformed, or does not contain a Bearer token.
+
+```json
+{
+  "error": "failed to get bearer token"
+}
+```
+
+##### `401 Unauthorized`
+Returned when the refresh token does not exist, has expired, or is invalid.
+
+```json
+{
+  "error": "failed to find token"
+}
+```
+
+##### `500 Internal Server Error`
+Returned when token generation, rotation, or database storage fails.
+
+```json
+{
+  "error": "failed to issue token"
+}
+```
