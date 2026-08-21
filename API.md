@@ -6,8 +6,8 @@
 | :--- | :--- | :--- | :--- |
 | `POST` | [`/api/v1/register`](#register-user) | Create a new user account | No |
 | `POST` | [`/api/v1/login`](#login-user) | Authenticate and obtain tokens | No |
-| `POST` | [`/api/v1/refresh`](#refresh-tokens) | Rotate refresh token and get a new access token | Yes (refresh token)|
-
+| `POST` | [`/api/v1/refresh`](#refresh-tokens) | Rotate refresh token and get a new access token | Yes (refresh token) |
+| `POST` | [`/api/v1/logout`](#logout-user) | Revoke a refresh token | Yes (Refresh Token) |
 ---
 
 ## Authentication & Users
@@ -187,7 +187,7 @@ Rotates an existing, valid refresh token and issues a new access token (JWT) alo
 * **Method:** `POST`
 * **Authentication Required:** Yes
 * **Headers:**
-* `Authorization: Bearer <refresh_token>`
+  * `Authorization: Bearer <refresh_token>`
 
 ---
 
@@ -232,5 +232,46 @@ Returned when token generation, rotation, or database storage fails.
 ```json
 {
   "error": "failed to issue token"
+}
+```
+---
+
+### Logout User
+
+Revokes the provided refresh token so it can no longer be used to issue new access tokens.
+
+* **URL:** `/api/v1/logout`
+* **Method:** `POST`
+* **Authentication Required:** Yes
+* **Headers:**
+  * `Authorization: Bearer <refresh_token>`
+
+---
+
+#### Request Body
+None.
+
+---
+
+#### Responses
+
+##### `204 No Content`
+Returned when the refresh token has been successfully revoked. No response body is returned.
+
+##### `400 Bad Request`
+Returned when the `Authorization` header is missing, malformed, or does not contain a Bearer token.
+
+```json
+{
+  "error": "failed to get bearer token"
+}
+```
+
+##### `500 Internal Server Error`
+Returned when a database error occurs while revoking the token.
+
+```json
+{
+  "error": "failed to revoke token"
 }
 ```
