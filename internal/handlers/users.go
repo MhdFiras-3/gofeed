@@ -220,7 +220,7 @@ func (cfg *APIConfig) MiddlewareAuth(next http.Handler) http.Handler {
 
 		accessToken, err := auth.GetBearerToken(r.Header)
 		if err != nil {
-			respWithError(w, http.StatusUnauthorized, "failed to get token")
+			respWithError(w, http.StatusUnauthorized, "invalid access token")
 			return
 		}
 		id, err := auth.ValidateJWT(accessToken, cfg.JWTSecret)

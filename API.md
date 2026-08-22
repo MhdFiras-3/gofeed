@@ -8,6 +8,8 @@
 | `POST` | [`/api/v1/login`](#login-user) | Authenticate and obtain tokens | No |
 | `POST` | [`/api/v1/refresh`](#refresh-tokens) | Rotate refresh token and get a new access token | Yes (refresh token) |
 | `POST` | [`/api/v1/logout`](#logout-user) | Revoke a refresh token | Yes (Refresh Token) |
+| `GET` | [`/api/v1/me`](#get-current-user) | Fetch the authenticated user's profile | Yes (Bearer Access Token) |
+
 ---
 
 ## Authentication & Users
@@ -273,5 +275,74 @@ Returned when a database error occurs while revoking the token.
 ```json
 {
   "error": "failed to revoke token"
+}
+```
+
+---
+
+### Get Current User
+
+Retrieves the profile information of the currently authenticated user.
+
+* **URL:** `/api/v1/me`
+* **Method:** `GET`
+* **Authentication Required:** Yes
+* **Headers:**
+  * `Authorization: Bearer <access_token>`
+
+---
+
+#### Request Body
+None.
+
+---
+
+#### Responses
+
+##### `200 OK`
+Returned with the authenticated user's details.
+
+```json
+{
+  "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "created_at": "2025-01-15T10:30:00Z",
+  "updated_at": "2025-01-15T10:30:00Z"
+}
+```
+
+##### `401 Unauthorized`
+Returned by the auth middleware when the access token is missing, expired, or invalid.
+
+```json
+{
+  "error": "invalid access token"
+}
+```
+
+##### `404 Not Found`
+Returned when the authenticated user ID does not match any record in the database.
+
+```json
+{
+  "error": "user not found"
+}
+```
+
+##### `500 Internal Server Error`
+Returned when an internal server error occurs (such as a database failure or missing context).
+
+*Database Error:*
+```json
+{
+  "error": "failed to get user"
+}
+```
+
+*Context Error:*
+```json
+{
+  "error": "missing user id in context"
 }
 ```
