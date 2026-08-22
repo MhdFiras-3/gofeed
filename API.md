@@ -9,6 +9,7 @@
 | `POST` | [`/api/v1/refresh`](#refresh-tokens) | Rotate refresh token and get a new access token | Yes (refresh token) |
 | `POST` | [`/api/v1/logout`](#logout-user) | Revoke a refresh token | Yes (Refresh Token) |
 | `GET` | [`/api/v1/me`](#get-current-user) | Fetch the authenticated user's profile | Yes (Bearer Access Token) |
+| `PATCH` | [`/api/v1/me`](#update-current-user) | Partially update the authenticated user's profile | Yes (Bearer Access Token) |
 
 ---
 
@@ -344,5 +345,107 @@ Returned when an internal server error occurs (such as a database failure or mis
 ```json
 {
   "error": "missing user id in context"
+}
+```
+
+---
+
+### Update Current User
+
+Partially updates the authenticated user's profile details. At least one field must be provided.
+
+* **URL:** `/api/v1/me`
+* **Method:** `PATCH`
+* **Authentication Required:** Yes
+* **Headers:**
+  * `Authorization: Bearer <access_token>`
+  * `Content-Type: application/json`
+
+---
+
+#### Request Body
+
+| Field | Type | Required | Constraints | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `name` | string | Optional | 1–45 chars, no control characters | New display name. |
+| `email` | string | Optional | 1–50 chars, valid email format | New email address (must be unique). |
+| `password` | string | Optional | 20–100 chars | New plaintext password to hash and update. |
+
+*Note: The request body cannot be empty; at least one field must be specified.*
+
+**Example Request:**
+
+```json
+{
+  "name": "Jane Smith",
+  "email": "janesmith@example.com"
+}
+```
+
+---
+
+#### Responses
+
+##### `200 OK`
+Returned when user details are successfully updated.
+
+```json
+{
+  "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+  "name": "Jane Smith",
+  "email": "janesmith@example.com",
+  "updated_at": "2025-01-15T11:45:00Z"
+}
+```
+
+##### `400 Bad Request`
+Returned when the JSON payload is malformed, no fields are provided, or input validation fails.
+
+*Malformed JSON:*
+```json
+{
+  "error": "invalid request payload"
+}
+```
+
+*No Fields Provided:*
+```json
+{
+  "error": "no fields to update"
+}
+```
+
+*Validation Errors:*
+```json
+{
+  "error": "invalid name"
+}
+```
+*(or `"invalid email"`, `"invalid password"`)*
+
+##### `401 Unauthorized`
+Returned by auth middleware when the access token is missing or invalid.
+
+```json
+{
+  "error": "unauthorized"
+}
+```
+
+##### `409 Conflict`
+Returned when attempting to update to an email address that is already registered by another account.
+
+```json
+{
+  "error": "email already registered"
+}
+```
+
+##### `500 Internal Server Error`
+Returned on internal server errors, context lookup issues, or database failures.
+
+```json
+{
+  "error": "something went wrong"
 }
 ```
