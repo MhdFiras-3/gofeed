@@ -10,6 +10,7 @@
 | `POST` | [`/api/v1/logout`](#logout-user) | Revoke a refresh token | Yes (Refresh Token) |
 | `GET` | [`/api/v1/me`](#get-current-user) | Fetch the authenticated user's profile | Yes (Bearer Access Token) |
 | `PATCH` | [`/api/v1/me`](#update-current-user) | Partially update the authenticated user's profile | Yes (Bearer Access Token) |
+| `DELETE` | [`/api/v1/me`](#delete-current-user) | Delete the authenticated user account | Yes (Bearer Access Token) |
 
 ---
 
@@ -447,5 +448,55 @@ Returned on internal server errors, context lookup issues, or database failures.
 ```json
 {
   "error": "something went wrong"
+}
+```
+
+---
+
+### Delete Current User
+
+Deletes the authenticated user's account and associated data from the system.
+
+* **URL:** `/api/v1/me`
+* **Method:** `DELETE`
+* **Authentication Required:** Yes
+* **Headers:**
+  * `Authorization: Bearer <access_token>`
+
+---
+
+#### Request Body
+None.
+
+---
+
+#### Responses
+
+##### `204 No Content`
+Returned when the user account is successfully deleted. No response body is returned.
+
+##### `401 Unauthorized`
+Returned by auth middleware when the access token is missing, expired, or invalid.
+
+```json
+{
+  "error": "unauthorized"
+}
+```
+
+##### `500 Internal Server Error`
+Returned when an error occurs while deleting the user from the database or retrieving context.
+
+*Database Error:*
+```json
+{
+  "error": "failed to delete user"
+}
+```
+
+*Context Error:*
+```json
+{
+  "error": "missing user id in context"
 }
 ```
