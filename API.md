@@ -27,6 +27,7 @@
 | :--- | :--- | :--- | :--- |
 | `GET` | [`/api/v1/posts`](#get-posts-for-user) | Retrieve all posts for feeds followed by the user | Yes (Access Token) |
 | `POST` | [`/api/v1/posts/{postID}/read`](#mark-post-as-read) | Mark a specific post as read for the user | Yes (Access Token) |
+| `GET` | [`/api/v1/posts/read`](#get-read-posts-for-user) | Retrieve all posts marked as read by the user | Yes (Access Token) |
 
 ---
 
@@ -1021,6 +1022,72 @@ Returned when context lookup fails or a database error occurs while marking the 
 ```json
 {
   "error": "failed to mark post read"
+}
+```
+
+*Context Error:*
+```json
+{
+  "error": "missing user id in context"
+}
+```
+
+---
+
+### Get Read Posts for User
+
+Retrieves all posts that have been marked as read by the authenticated user, including the timestamp when each post was read.
+
+* **URL:** `/api/v1/posts/read`
+* **Method:** `GET`
+* **Authentication Required:** Yes
+* **Headers:**
+  * `Authorization: Bearer <access_token>`
+
+---
+
+#### Request Body
+None.
+
+---
+
+#### Responses
+
+##### `200 OK`
+Returned with a JSON array of read posts. Returns an empty array `[]` if no posts have been marked as read.
+
+```json
+[
+  {
+    "id": "2b992f9d-5a7e-4008-8e69-0df854e7c7e1",
+    "title": "Why Go instead of Python for backend systems",
+    "url": "https://exampletech.com/posts/why-go/",
+    "description": "A deep dive into concurrency, memory management, and typing in Go.",
+    "feed_id": "e4b01140-5b5c-4f9e-9764-77a83d7cb45d",
+    "created_at": "2025-01-15T12:00:00Z",
+    "updated_at": "2025-01-15T12:00:00Z",
+    "published_at": "2025-01-15T10:00:00Z",
+    "read_at": "2025-01-15T14:30:00Z"
+  }
+]
+```
+
+##### `401 Unauthorized`
+Returned by auth middleware when the access token is missing or invalid.
+
+```json
+{
+  "error": "invalid access token"
+}
+```
+
+##### `500 Internal Server Error`
+Returned when context lookup fails or a database query error occurs.
+
+*Database Error:*
+```json
+{
+  "error": "failed to get read posts for user"
 }
 ```
 
