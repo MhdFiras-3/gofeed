@@ -65,7 +65,7 @@ func main() {
 			r.Delete("/follows/{feedID}", apicfg.HandlerDeleteFeedFollow)
 			r.Get("/posts", apicfg.HandlerGetPostsForUser)
 			r.Post("/posts/{postID}/read", apicfg.HandlerMarkPostRead)
-			r.Get("posts/read", apicfg.HandlerGetReadPostsForUser)
+			r.Get("/posts/read", apicfg.HandlerGetReadPostsForUser)
 		})
 
 	})

@@ -7,7 +7,7 @@
 | :--- | :--- | :--- | :--- |
 | `POST` | [`/api/v1/register`](#register-user) | Create a new user account | No |
 | `POST` | [`/api/v1/login`](#login-user) | Authenticate and obtain tokens | No |
-| `POST` | [`/api/v1/refresh`](#refresh-tokens) | Rotate refresh token and get a new access token | Yes (refresh token) |
+| `POST` | [`/api/v1/refresh`](#refresh-tokens) | Rotate refresh token and get a new access token | Yes (Refresh token) |
 | `POST` | [`/api/v1/logout`](#logout-user) | Revoke a refresh token | Yes (Refresh Token) |
 | `GET` | [`/api/v1/me`](#get-current-user) | Fetch the authenticated user's profile | Yes (Access Token) |
 | `PATCH` | [`/api/v1/me`](#update-current-user) | Partially update the authenticated user's profile | Yes (Access Token) |
