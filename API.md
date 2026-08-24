@@ -2,6 +2,7 @@
 
 ## Endpoints Summary
 
+### Authentication & Users
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :--- |
 | `POST` | [`/api/v1/register`](#register-user) | Create a new user account | No |
@@ -11,6 +12,11 @@
 | `GET` | [`/api/v1/me`](#get-current-user) | Fetch the authenticated user's profile | Yes (Bearer Access Token) |
 | `PATCH` | [`/api/v1/me`](#update-current-user) | Partially update the authenticated user's profile | Yes (Bearer Access Token) |
 | `DELETE` | [`/api/v1/me`](#delete-current-user) | Delete the authenticated user account | Yes (Bearer Access Token) |
+
+### Feeds
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :--- |
+| `GET` | [`/api/v1/feeds`](#get-all-feeds) | Retrieve all registered RSS feeds | No |
 
 ---
 
@@ -498,5 +504,59 @@ Returned when an error occurs while deleting the user from the database or retri
 ```json
 {
   "error": "missing user id in context"
+}
+```
+---
+
+## Feeds
+
+### Get All Feeds
+
+Retrieves a list of all registered RSS feeds in the system.
+
+* **URL:** `/api/v1/feeds`
+* **Method:** `GET`
+* **Authentication Required:** No (Public)
+* **Headers:** None
+
+---
+
+#### Request Body
+None.
+
+---
+
+#### Responses
+
+##### `200 OK`
+Returned with a JSON array of feeds. Returns an empty array `[]` if no feeds exist.
+
+```json
+[
+  {
+    "id": "e4b01140-5b5c-4f9e-9764-77a83d7cb45d",
+    "url": "https://exampletech.com/index.xml",
+    "category": "tech",
+    "last_fetched_at": "2025-01-15T10:30:00Z",
+    "created_at": "2025-01-14T08:00:00Z",
+    "updated_at": "2025-01-15T10:30:00Z"
+  },
+  {
+    "id": "76fa2e7d-304e-4e44-b054-945fa5cb9c20",
+    "url": "https://news.ycombinator.com/rss",
+    "category": "news",
+    "last_fetched_at": null,
+    "created_at": "2025-01-15T09:00:00Z",
+    "updated_at": "2025-01-15T09:00:00Z"
+  }
+]
+```
+
+##### `500 Internal Server Error`
+Returned when a database error occurs while fetching feeds.
+
+```json
+{
+  "error": "something went wrong"
 }
 ```
