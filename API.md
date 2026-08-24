@@ -26,6 +26,7 @@
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :--- |
 | `GET` | [`/api/v1/posts`](#get-posts-for-user) | Retrieve all posts for feeds followed by the user | Yes (Access Token) |
+| `POST` | [`/api/v1/posts/{postID}/read`](#mark-post-as-read) | Mark a specific post as read for the user | Yes (Access Token) |
 
 ---
 
@@ -444,7 +445,7 @@ Returned by auth middleware when the access token is missing or invalid.
 
 ```json
 {
-  "error": "unauthorized"
+  "error": "invalid access token"
 }
 ```
 
@@ -495,7 +496,7 @@ Returned by auth middleware when the access token is missing, expired, or invali
 
 ```json
 {
-  "error": "unauthorized"
+  "error": "invalid access token"
 }
 ```
 
@@ -713,7 +714,7 @@ Returned by auth middleware when the access token is missing or invalid.
 
 ```json
 {
-  "error": "unauthorized"
+  "error": "invalid access token"
 }
 ```
 
@@ -777,7 +778,7 @@ Returned by auth middleware when the access token is missing or invalid.
 
 ```json
 {
-  "error": "unauthorized"
+  "error": "invalid access token"
 }
 ```
 
@@ -844,7 +845,7 @@ Returned by auth middleware when the access token is missing or invalid.
 
 ```json
 {
-  "error": "unauthorized"
+  "error": "invalid access token"
 }
 ```
 
@@ -928,7 +929,7 @@ Returned by auth middleware when the access token is missing or invalid.
 
 ```json
 {
-  "error": "unauthorized"
+  "error": "invalid access token"
 }
 ```
 
@@ -939,6 +940,87 @@ Returned when context lookup fails or a database query error occurs.
 ```json
 {
   "error": "failed to get posts"
+}
+```
+
+*Context Error:*
+```json
+{
+  "error": "missing user id in context"
+}
+```
+
+---
+
+### Mark Post as Read
+
+Marks a specific post as read by the authenticated user. This operation is idempotent; if the post is already marked as read, it returns a `200 OK` status confirming the existing state.
+
+* **URL:** `/api/v1/posts/{postID}/read`
+* **Method:** `POST`
+* **Authentication Required:** Yes
+* **Headers:**
+  * `Authorization: Bearer <access_token>`
+
+---
+
+#### URL Parameters
+
+| Parameter | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `postID` | uuid | Yes | The UUID of the post to mark as read. |
+
+---
+
+#### Request Body
+None.
+
+---
+
+#### Responses
+
+##### `200 OK`
+Returned when the post is successfully marked as read or was previously marked as read.
+
+*Marked for the first time:*
+```json
+{
+  "status": "post marked as read"
+}
+```
+
+*Already marked as read:*
+```json
+{
+  "status": "post already marked as read"
+}
+```
+
+##### `400 Bad Request`
+Returned when the `postID` URL parameter is not a valid UUID format.
+
+```json
+{
+  "error": "invalid post id"
+}
+```
+
+##### `401 Unauthorized`
+Returned by auth middleware when the access token is missing or invalid.
+
+```json
+{
+  "error": "invalid access token"
+}
+```
+
+##### `500 Internal Server Error`
+Returned when context lookup fails or a database error occurs while marking the post as read.
+
+*Database Error:*
+```json
+{
+  "error": "failed to mark post read"
 }
 ```
 
