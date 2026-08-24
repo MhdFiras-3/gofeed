@@ -18,6 +18,7 @@
 | :--- | :--- | :--- | :--- |
 | `GET` | [`/api/v1/feeds`](#get-all-feeds) | Retrieve all registered RSS feeds | No |
 | `GET` | [`/api/v1/feeds/{feedID}`](#get-feed-by-id) | Retrieve a specific feed by its ID | No |
+| `POST` | [`/api/v1/feeds`](#create-feed) | Register a new RSS feed and automatically follow it | Yes (Bearer Access Token) |
 
 ---
 
@@ -629,5 +630,99 @@ Returned when a database error occurs while fetching the feed.
 ```json
 {
   "error": "something went wrong"
+}
+```
+
+---
+
+### Create Feed
+
+Registers a new RSS feed in the system within a transaction and automatically creates a feed follow entry with a custom label for the authenticated user.
+
+* **URL:** `/api/v1/feeds`
+* **Method:** `POST`
+* **Authentication Required:** Yes
+* **Headers:**
+  * `Authorization: Bearer <access_token>`
+  * `Content-Type: application/json`
+
+---
+
+#### Request Body
+
+| Field | Type | Required | Constraints | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `url` | string | Yes | Valid URL format | The RSS/Atom feed URL. |
+| `name` | string | Yes | 1–45 chars, no control characters | Custom name/label for the feed follow. |
+
+**Example Request:**
+
+```json
+{
+  "url": "https://exampletech.com/index.xml",
+  "name": "My Tech Blog"
+}
+```
+
+---
+
+#### Responses
+
+##### `201 Created`
+Returned when the feed is successfully created and followed.
+
+```json
+{
+  "id": "c1f76e10-90fb-4d89-9a06-4b8c6e2467b2",
+  "user_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+  "feed_id": "e4b01140-5b5c-4f9e-9764-77a83d7cb45d",
+  "name": "My Tech Blog",
+  "user_name": "Jane Doe",
+  "created_at": "2025-01-15T12:00:00Z",
+  "updated_at": "2025-01-15T12:00:00Z"
+}
+```
+
+##### `400 Bad Request`
+Returned when the request body is malformed or input validation fails.
+
+*Malformed JSON:*
+```json
+{
+  "error": "invalid request body"
+}
+```
+
+*Validation Errors:*
+```json
+{
+  "error": "invalid URL"
+}
+```
+*(or `"invalid feed name"`)*
+
+##### `401 Unauthorized`
+Returned by auth middleware when the access token is missing or invalid.
+
+```json
+{
+  "error": "unauthorized"
+}
+```
+
+##### `500 Internal Server Error`
+Returned when context lookup fails or a database transaction error occurs.
+
+*Database/Transaction Error:*
+```json
+{
+  "error": "something went wrong"
+}
+```
+
+*Context Error:*
+```json
+{
+  "error": "missing user id in context"
 }
 ```
