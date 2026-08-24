@@ -9,17 +9,17 @@
 | `POST` | [`/api/v1/login`](#login-user) | Authenticate and obtain tokens | No |
 | `POST` | [`/api/v1/refresh`](#refresh-tokens) | Rotate refresh token and get a new access token | Yes (refresh token) |
 | `POST` | [`/api/v1/logout`](#logout-user) | Revoke a refresh token | Yes (Refresh Token) |
-| `GET` | [`/api/v1/me`](#get-current-user) | Fetch the authenticated user's profile | Yes (Bearer Access Token) |
-| `PATCH` | [`/api/v1/me`](#update-current-user) | Partially update the authenticated user's profile | Yes (Bearer Access Token) |
-| `DELETE` | [`/api/v1/me`](#delete-current-user) | Delete the authenticated user account | Yes (Bearer Access Token) |
+| `GET` | [`/api/v1/me`](#get-current-user) | Fetch the authenticated user's profile | Yes (Access Token) |
+| `PATCH` | [`/api/v1/me`](#update-current-user) | Partially update the authenticated user's profile | Yes (Access Token) |
+| `DELETE` | [`/api/v1/me`](#delete-current-user) | Delete the authenticated user account | Yes (Access Token) |
 
 ### Feeds
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :--- |
 | `GET` | [`/api/v1/feeds`](#get-all-feeds) | Retrieve all registered RSS feeds | No |
 | `GET` | [`/api/v1/feeds/{feedID}`](#get-feed-by-id) | Retrieve a specific feed by its ID | No |
-| `POST` | [`/api/v1/feeds`](#create-feed) | Register a new RSS feed and automatically follow it | Yes (Bearer Access Token) |
-
+| `POST` | [`/api/v1/feeds`](#create-feed) | Register a new RSS feed and automatically follow it | Yes (Access Token) |
+| `GET` | [`/api/v1/follows`](#get-feed-follows) | Retrieve all feeds followed by the authenticated user | Yes (Access Token) |
 ---
 
 ## Authentication & Users
@@ -714,6 +714,70 @@ Returned by auth middleware when the access token is missing or invalid.
 Returned when context lookup fails or a database transaction error occurs.
 
 *Database/Transaction Error:*
+```json
+{
+  "error": "something went wrong"
+}
+```
+
+*Context Error:*
+```json
+{
+  "error": "missing user id in context"
+}
+```
+
+---
+
+### Get Feed Follows
+
+Retrieves a list of all RSS feed subscriptions (follows) for the authenticated user.
+
+* **URL:** `/api/v1/follows`
+* **Method:** `GET`
+* **Authentication Required:** Yes
+* **Headers:**
+  * `Authorization: Bearer <access_token>`
+
+---
+
+#### Request Body
+None.
+
+---
+
+#### Responses
+
+##### `200 OK`
+Returned with a JSON array of feed follows for the authenticated user. Returns an empty array `[]` if the user has no followed feeds.
+
+```json
+[
+  {
+    "id": "c1f76e10-90fb-4d89-9a06-4b8c6e2467b2",
+    "user_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+    "feed_id": "e4b01140-5b5c-4f9e-9764-77a83d7cb45d",
+    "name": "My Tech Blog",
+    "user_name": "Jane Doe",
+    "created_at": "2025-01-15T12:00:00Z",
+    "updated_at": "2025-01-15T12:00:00Z"
+  }
+]
+```
+
+##### `401 Unauthorized`
+Returned by auth middleware when the access token is missing or invalid.
+
+```json
+{
+  "error": "unauthorized"
+}
+```
+
+##### `500 Internal Server Error`
+Returned when context lookup fails or a database error occurs while fetching follows.
+
+*Database Error:*
 ```json
 {
   "error": "something went wrong"
