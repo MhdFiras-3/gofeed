@@ -17,6 +17,7 @@
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :--- |
 | `GET` | [`/api/v1/feeds`](#get-all-feeds) | Retrieve all registered RSS feeds | No |
+| `GET` | [`/api/v1/feeds/{feedID}`](#get-feed-by-id) | Retrieve a specific feed by its ID | No |
 
 ---
 
@@ -506,6 +507,7 @@ Returned when an error occurs while deleting the user from the database or retri
   "error": "missing user id in context"
 }
 ```
+
 ---
 
 ## Feeds
@@ -554,6 +556,75 @@ Returned with a JSON array of feeds. Returns an empty array `[]` if no feeds exi
 
 ##### `500 Internal Server Error`
 Returned when a database error occurs while fetching feeds.
+
+```json
+{
+  "error": "something went wrong"
+}
+```
+
+---
+
+### Get Feed by ID
+
+Retrieves details of a specific RSS feed using its unique UUID identifier.
+
+* **URL:** `/api/v1/feeds/{feedID}`
+* **Method:** `GET`
+* **Authentication Required:** No (Public)
+* **Headers:** None
+
+---
+
+#### URL Parameters
+
+| Parameter | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `feedID` | uuid | Yes | The UUID of the feed to retrieve. |
+
+---
+
+#### Request Body
+None.
+
+---
+
+#### Responses
+
+##### `200 OK`
+Returned when the feed is found.
+
+```json
+{
+  "id": "e4b01140-5b5c-4f9e-9764-77a83d7cb45d",
+  "url": "https://exampletech.com/index.xml",
+  "category": "tech",
+  "last_fetched_at": "2025-01-15T10:30:00Z",
+  "created_at": "2025-01-14T08:00:00Z",
+  "updated_at": "2025-01-15T10:30:00Z"
+}
+```
+
+##### `400 Bad Request`
+Returned when the provided `feedID` is not a valid UUID format.
+
+```json
+{
+  "error": "no such feed id"
+}
+```
+
+##### `404 Not Found`
+Returned when no feed matches the provided `feedID`.
+
+```json
+{
+  "error": "no such feed found"
+}
+```
+
+##### `500 Internal Server Error`
+Returned when a database error occurs while fetching the feed.
 
 ```json
 {
