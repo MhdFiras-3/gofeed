@@ -20,6 +20,7 @@
 | `GET` | [`/api/v1/feeds/{feedID}`](#get-feed-by-id) | Retrieve a specific feed by its ID | No |
 | `POST` | [`/api/v1/feeds`](#create-feed) | Register a new RSS feed and automatically follow it | Yes (Access Token) |
 | `GET` | [`/api/v1/follows`](#get-feed-follows) | Retrieve all feeds followed by the authenticated user | Yes (Access Token) |
+| `DELETE` | [`/api/v1/follows/{feedID}`](#delete-feed-follow) | Unfollow a feed for the authenticated user | Yes (Access Token) |
 ---
 
 ## Authentication & Users
@@ -776,6 +777,82 @@ Returned by auth middleware when the access token is missing or invalid.
 
 ##### `500 Internal Server Error`
 Returned when context lookup fails or a database error occurs while fetching follows.
+
+*Database Error:*
+```json
+{
+  "error": "something went wrong"
+}
+```
+
+*Context Error:*
+```json
+{
+  "error": "missing user id in context"
+}
+```
+
+---
+
+### Delete Feed Follow
+
+Unfollows a feed for the authenticated user.
+
+* **URL:** `/api/v1/follows/{feedID}`
+* **Method:** `DELETE`
+* **Authentication Required:** Yes
+* **Headers:**
+  * `Authorization: Bearer <access_token>`
+
+---
+
+#### URL Parameters
+
+| Parameter | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `feedID` | uuid | Yes | The UUID of the feed to unfollow. |
+
+---
+
+#### Request Body
+None.
+
+---
+
+#### Responses
+
+##### `204 No Content`
+Returned when the feed follow is successfully deleted. No response body is returned.
+
+##### `400 Bad Request`
+Returned when the provided `feedID` in the URL is not a valid UUID format.
+
+```json
+{
+  "error": "invalid feed id"
+}
+```
+
+##### `401 Unauthorized`
+Returned by auth middleware when the access token is missing or invalid.
+
+```json
+{
+  "error": "unauthorized"
+}
+```
+
+##### `404 Not Found`
+Returned when the authenticated user is not following the specified feed.
+
+```json
+{
+  "error": "no such feed follow found"
+}
+```
+
+##### `500 Internal Server Error`
+Returned when context lookup fails or a database error occurs while deleting the follow.
 
 *Database Error:*
 ```json
