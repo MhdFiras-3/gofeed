@@ -21,6 +21,12 @@
 | `POST` | [`/api/v1/feeds`](#create-feed) | Register a new RSS feed and automatically follow it | Yes (Access Token) |
 | `GET` | [`/api/v1/follows`](#get-feed-follows) | Retrieve all feeds followed by the authenticated user | Yes (Access Token) |
 | `DELETE` | [`/api/v1/follows/{feedID}`](#delete-feed-follow) | Unfollow a feed for the authenticated user | Yes (Access Token) |
+
+### Posts
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :--- |
+| `GET` | [`/api/v1/posts`](#get-posts-for-user) | Retrieve all posts for feeds followed by the user | Yes (Access Token) |
+
 ---
 
 ## Authentication & Users
@@ -858,6 +864,81 @@ Returned when context lookup fails or a database error occurs while deleting the
 ```json
 {
   "error": "something went wrong"
+}
+```
+
+*Context Error:*
+```json
+{
+  "error": "missing user id in context"
+}
+```
+
+---
+
+## Posts
+
+### Get Posts for User
+
+Retrieves posts from all feeds currently followed by the authenticated user, ordered by publication date descending.
+
+* **URL:** `/api/v1/posts`
+* **Method:** `GET`
+* **Authentication Required:** Yes
+* **Headers:**
+  * `Authorization: Bearer <access_token>`
+
+---
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `limit` | integer | Optional | Maximum number of posts to return (e.g., `?limit=10`). Defaults to a preset limit if omitted or invalid. |
+
+---
+
+#### Request Body
+None.
+
+---
+
+#### Responses
+
+##### `200 OK`
+Returned with a JSON array of posts. Returns an empty array `[]` if no posts are found.
+
+```json
+[
+  {
+    "id": "2b992f9d-5a7e-4008-8e69-0df854e7c7e1",
+    "title": "Why Go instead of Python for backend systems",
+    "url": "https://exampletech.com/posts/why-go/",
+    "description": "A deep dive into concurrency, memory management, and typing in Go.",
+    "feed_id": "e4b01140-5b5c-4f9e-9764-77a83d7cb45d",
+    "created_at": "2025-01-15T12:00:00Z",
+    "updated_at": "2025-01-15T12:00:00Z",
+    "published_at": "2025-01-15T10:00:00Z"
+  }
+]
+```
+
+##### `401 Unauthorized`
+Returned by auth middleware when the access token is missing or invalid.
+
+```json
+{
+  "error": "unauthorized"
+}
+```
+
+##### `500 Internal Server Error`
+Returned when context lookup fails or a database query error occurs.
+
+*Database Error:*
+```json
+{
+  "error": "failed to get posts"
 }
 ```
 
