@@ -83,9 +83,15 @@ func (cfg *APIConfig) HandlerMarkPostRead(w http.ResponseWriter, r *http.Request
 		PostID: postID,
 	}); err != nil {
 		var pqErr *pq.Error
-		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
-			respWithJson(w, http.StatusOK, map[string]string{"status": "post already marked as read"})
-			return
+		if errors.As(err, &pqErr) {
+			if pqErr.Code == "23505" { // unique violation
+				respWithJson(w, http.StatusOK, map[string]string{"status": "post already marked as read"})
+				return
+			}
+			if pqErr.Code == "23503" { // foreign key violation
+				respWithError(w, http.StatusNotFound, "post not found")
+				return
+			}
 		}
 		respWithError(w, http.StatusInternalServerError, "failed to mark post read")
 		log.Printf("failed to mark post read: %v", err)

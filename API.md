@@ -1015,6 +1015,15 @@ Returned by auth middleware when the access token is missing or invalid.
 }
 ```
 
+##### `404 Not Found`
+Returned when the specified `postID` does not exist in the database.
+
+```json
+{
+  "error": "post not found"
+}
+```
+
 ##### `500 Internal Server Error`
 Returned when context lookup fails or a database error occurs while marking the post as read.
 
