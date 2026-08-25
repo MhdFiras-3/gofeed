@@ -719,6 +719,15 @@ Returned by auth middleware when the access token is missing or invalid.
 }
 ```
 
+##### `409 Conflict`
+Returned when the feed URL is already registered in the system.
+
+```json
+{
+  "error": "feed already registered"
+}
+```
+
 ##### `500 Internal Server Error`
 Returned when context lookup fails or a database transaction error occurs.
 

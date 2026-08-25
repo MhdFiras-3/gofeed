@@ -11,6 +11,7 @@ import (
 	"github.com/MhdFiras-3/gofeed/internal/database"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 func (cfg *APIConfig) HandlerCreateFeed(w http.ResponseWriter, r *http.Request) {
@@ -61,6 +62,11 @@ func (cfg *APIConfig) HandlerCreateFeed(w http.ResponseWriter, r *http.Request) 
 	dbTx := cfg.DB.WithTx(tx)
 	feedDB, err := dbTx.CreateFeed(r.Context(), reqData.URL)
 	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			respWithError(w, http.StatusConflict, "feed already registered")
+			return
+		}
 		respWithError(w, http.StatusInternalServerError, "something went wrong")
 		log.Printf("failed to create feed: %v", err)
 		return
