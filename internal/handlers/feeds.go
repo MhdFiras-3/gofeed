@@ -244,3 +244,44 @@ func (cfg *APIConfig) HandlerGetFeedByID(w http.ResponseWriter, r *http.Request)
 		UpdatedAt:     feedDB.UpdatedAt,
 	})
 }
+
+func (cfg *APIConfig) HandlerCreateFeedFollow(w http.ResponseWriter, r *http.Request) {
+	type requestParam struct {
+		FeedID uuid.UUID `json:"feed_id"`
+		Name   string    `json:"name"`
+	}
+
+	var reqData requestParam
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&reqData); err != nil {
+		respWithError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if err := parseName(reqData.Name); err != nil {
+		respWithError(w, http.StatusBadRequest, "invalid feed name")
+		return
+	}
+
+	userID, ok := r.Context().Value(userIDKey).(uuid.UUID)
+	if !ok {
+		respWithError(w, http.StatusInternalServerError, "missing user id in context")
+		log.Println("failed to get user id from context to follow feed")
+		return
+	}
+	_, err := cfg.DB.CreateFeedFollow(r.Context(), database.CreateFeedFollowParams{
+		UserID: userID,
+		FeedID: reqData.FeedID,
+		Name:   reqData.Name,
+	})
+	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			respWithJson(w, http.StatusOK, map[string]string{"status": "feed already followed"})
+			return
+		}
+		respWithError(w, http.StatusInternalServerError, "something went wrong")
+		log.Printf("failed to create feed follow: %v", err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
