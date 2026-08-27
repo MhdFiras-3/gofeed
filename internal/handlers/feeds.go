@@ -250,6 +250,15 @@ func (cfg *APIConfig) HandlerCreateFeedFollow(w http.ResponseWriter, r *http.Req
 		FeedID uuid.UUID `json:"feed_id"`
 		Name   string    `json:"name"`
 	}
+	type response struct {
+		ID        uuid.UUID `json:"id"`
+		UserID    uuid.UUID `json:"user_id"`
+		FeedID    uuid.UUID `json:"feed_id"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+		Name      string    `json:"name"`
+		UserName  string    `json:"user_name"`
+	}
 
 	var reqData requestParam
 	decoder := json.NewDecoder(r.Body)
@@ -268,20 +277,35 @@ func (cfg *APIConfig) HandlerCreateFeedFollow(w http.ResponseWriter, r *http.Req
 		log.Println("failed to get user id from context to follow feed")
 		return
 	}
-	_, err := cfg.DB.CreateFeedFollow(r.Context(), database.CreateFeedFollowParams{
+	DBFeedFollow, err := cfg.DB.CreateFeedFollow(r.Context(), database.CreateFeedFollowParams{
 		UserID: userID,
 		FeedID: reqData.FeedID,
 		Name:   reqData.Name,
 	})
 	if err != nil {
 		var pqErr *pq.Error
-		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
-			respWithJson(w, http.StatusOK, map[string]string{"status": "feed already followed"})
-			return
+		if errors.As(err, &pqErr) {
+			if pqErr.Code == "23505" {
+				respWithJson(w, http.StatusOK, map[string]string{"status": "feed already followed"})
+				return
+			}
+
+			if pqErr.Code == "23503" {
+				respWithError(w, http.StatusNotFound, "feed not found")
+				return
+			}
 		}
 		respWithError(w, http.StatusInternalServerError, "something went wrong")
 		log.Printf("failed to create feed follow: %v", err)
 		return
 	}
-	w.WriteHeader(http.StatusNoContent)
+	respWithJson(w, http.StatusCreated, response{
+		ID:        DBFeedFollow.ID,
+		UserID:    DBFeedFollow.UserID,
+		FeedID:    DBFeedFollow.FeedID,
+		CreatedAt: DBFeedFollow.CreatedAt,
+		UpdatedAt: DBFeedFollow.UpdatedAt,
+		Name:      DBFeedFollow.Name,
+		UserName:  DBFeedFollow.UserName,
+	})
 }
