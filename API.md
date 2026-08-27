@@ -20,6 +20,7 @@
 | `GET` | [`/api/v1/feeds/{feedID}`](#get-feed-by-id) | Retrieve a specific feed by its ID | No |
 | `POST` | [`/api/v1/feeds`](#create-feed) | Register a new RSS feed and automatically follow it | Yes (Access Token) |
 | `GET` | [`/api/v1/follows`](#get-feed-follows) | Retrieve all feeds followed by the authenticated user | Yes (Access Token) |
+| `POST` | [`/api/v1/follows`](#follow-feed) | Follow a feed by the authenticated user| Yes (Access Token) |
 | `DELETE` | [`/api/v1/follows/{feedID}`](#delete-feed-follow) | Unfollow a feed for the authenticated user | Yes (Access Token) |
 
 ### Posts
@@ -794,6 +795,117 @@ Returned by auth middleware when the access token is missing or invalid.
 
 ##### `500 Internal Server Error`
 Returned when context lookup fails or a database error occurs while fetching follows.
+
+*Database Error:*
+```json
+{
+  "error": "something went wrong"
+}
+```
+
+*Context Error:*
+```json
+{
+  "error": "missing user id in context"
+}
+```
+
+---
+
+### Follow Feed
+
+Subscribes the authenticated user to an existing RSS feed using its feed ID.
+
+* **URL:** `/api/v1/follows`
+* **Method:** `POST`
+* **Authentication Required:** Yes
+* **Headers:**
+  * `Authorization: Bearer <access_token>`
+  * `Content-Type: application/json`
+
+---
+
+#### Request Body
+
+| Field | Type | Required | Constraints | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `feed_id` | uuid | Yes | Valid UUID | The UUID of the feed to follow. |
+| `name` | string | Yes | 1–45 chars, no control characters | Custom label/name for the feed follow. |
+
+**Example Request:**
+
+```json
+{
+  "feed_id": "e4b01140-5b5c-4f9e-9764-77a83d7cb45d",
+  "name": "My Favorite Tech Blog"
+}
+```
+
+---
+
+#### Responses
+
+##### `201 Created`
+Returned when the feed is successfully followed for the first time.
+
+```json
+{
+  "id": "c1f76e10-90fb-4d89-9a06-4b8c6e2467b2",
+  "user_id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+  "feed_id": "e4b01140-5b5c-4f9e-9764-77a83d7cb45d",
+  "created_at": "2025-01-15T12:00:00Z",
+  "updated_at": "2025-01-15T12:00:00Z",
+  "name": "My Favorite Tech Blog",
+  "user_name": "Jane Doe"
+}
+```
+
+##### `200 OK`
+Returned when the feed is already followed by the authenticated user.
+
+```json
+{
+  "status": "feed already followed"
+}
+```
+
+##### `400 Bad Request`
+Returned when the JSON payload is malformed or input validation fails.
+
+*Malformed JSON:*
+```json
+{
+  "error": "invalid request body"
+}
+```
+
+*Validation Errors:*
+```json
+{
+  "error": "invalid feed name"
+}
+```
+
+##### `401 Unauthorized`
+Returned by auth middleware when the access token is missing or invalid.
+
+```json
+{
+  "error": "unauthorized"
+}
+```
+
+##### `404 Not Found`
+Returned when the specified `feed_id` does not exist in the database.
+
+```json
+{
+  "error": "feed not found"
+}
+```
+
+##### `500 Internal Server Error`
+Returned when context lookup fails or an unexpected database error occurs.
 
 *Database Error:*
 ```json
