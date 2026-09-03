@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/MhdFiras-3/gofeed/internal/database"
@@ -31,10 +33,12 @@ func main() {
 	)
 
 	dbConnection, err := sql.Open("postgres", dbURL)
-
 	if err != nil {
 		log.Fatalf("err connecting to database: %v", err)
 	}
+
+	defer dbConnection.Close()
+
 	dbQueries := database.New(dbConnection)
 
 	apicfg := &handlers.APIConfig{
@@ -70,7 +74,27 @@ func main() {
 		})
 
 	})
-	go scraper.StartScraping(context.Background(), apicfg.DB, apicfg.Ticker)
-	fmt.Printf("serving on %s\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, r))
+
+	server := &http.Server{
+		Addr:         ":" + port,
+		Handler:      r,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM)
+	defer stop()
+	go scraper.StartScraping(ctx, apicfg.DB, apicfg.Ticker)
+	go func() {
+		fmt.Printf("serving on %s\n", port)
+		log.Fatal(server.ListenAndServe())
+	}()
+	<-ctx.Done()
+	log.Println("shutdown signal recieved, exiting...")
+
+	shutdownCtx, cancle := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancle()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		log.Printf("server forced to shutdown, %v", err)
+	}
 }
