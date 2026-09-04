@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -81,18 +82,20 @@ func main() {
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	go scraper.StartScraping(ctx, apicfg.DB, apicfg.Ticker)
 	go func() {
 		fmt.Printf("serving on %s\n", port)
-		log.Fatal(server.ListenAndServe())
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("server error: %v", err)
+		}
 	}()
 	<-ctx.Done()
-	log.Println("shutdown signal recieved, exiting...")
+	log.Println("shutdown signal received, exiting...")
 
-	shutdownCtx, cancle := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancle()
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	if err := server.Shutdown(shutdownCtx); err != nil {
 		log.Printf("server forced to shutdown, %v", err)
